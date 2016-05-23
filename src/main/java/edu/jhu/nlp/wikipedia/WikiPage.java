@@ -2,6 +2,7 @@ package edu.jhu.nlp.wikipedia;
 
 import java.util.HashSet;
 import java.util.Vector;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -41,6 +42,8 @@ public class WikiPage {
     public String getTitle() {
         return title;
     }
+    
+  
 
     private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
 
@@ -91,6 +94,77 @@ public class WikiPage {
     public String getWikiText() {
         return wikiTextParser.getText();
     }
+    
+    /**
+     * Use this method to get wiki tables
+     * @return
+     */
+    public HashSet<String> getWikiTable(){
+    	return wikiTextParser.getTables();
+    }
+    
+    
+    public void parseHeaders (String table)
+    {
+    	//headers= new HashSet<String>();
+    	 Pattern pattern = Pattern.compile("!(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
+    	   Matcher matcher = pattern.matcher(table);
+           while (matcher.find()) {
+        	   if (matcher.group().length() != 0){
+        		   
+        		   String[] headers= matcher.group(1).split("!");
+        		   
+        		   
+        		   for (int i=0;i< headers.length;i++)
+        	         {
+        			    headers[i]= headers[i].replaceAll("<ref.*?>.*?</ref>", " ");
+        			    headers[i]= headers[i].replaceAll("<ref.*?/>", " ");
+        			    headers[i]= headers[i].replaceAll("<br>", " ");
+        			    headers[i]= headers[i].replaceAll("colspan=.*?\\|", " ");
+        			    headers[i]= headers[i].replaceAll("'''", " ");
+        			    
+        	        	System.out.println("headers: "+ headers[i]); 
+        	         }
+        		   /*for(int i=0; i<header.length; i++){
+        		   headers.add(header[i]);
+        		   }*/
+     			  }
+       
+           		}
+    	 
+    }  
+    
+   
+   /* public String[] getWikiHeaders(String table){
+    	
+    	return wikiTextParser.getHeaders(table);
+    	
+    }*/
+    
+    /**
+     * Parsing rows
+     */
+ 
+    
+    public void parseRows (String table)
+    {
+    	Pattern pattern = Pattern.compile("\\|\\-(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
+  	   Matcher matcher = pattern.matcher(table);
+  	 while(matcher.find()) {
+		  if (matcher.group().length() != 0){
+			 String regex = matcher.group(1).substring(2);
+			 //System.out.println("le regex: "+regex);
+			// System.out.println("hello");
+			String[]   rows= regex.split("\\|\\|");
+			 
+			for (int i=0;i<rows.length;i++)
+			{
+		  System.out.println("rows: "+rows[i]);
+			}
+			
+			}
+    }}
+    
 
     /**
      * @return true if this is a redirection page
@@ -145,6 +219,8 @@ public class WikiPage {
 	public Vector<Pair<String, Integer>> getLinkPos() {
 		return wikiTextParser.getLinkPos();
 	}
+	
+	
     
     public void setID(String id) {
         this.id = id;

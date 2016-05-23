@@ -1,5 +1,8 @@
 package ca.uAlbeta.cs.extractor;
 
+import java.util.HashSet;
+import java.util.Iterator;
+
 import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
 import edu.jhu.nlp.wikipedia.WikiXMLSAXParser;
@@ -34,12 +37,22 @@ public class Wikiparser implements PageCallbackHandler {
 			System.out.println(wkstrID);
 			Long wikiID = Long.parseLong( wkstrID );
 			
-			System.out.println("Here is the title"+page.getTitle());
+			System.out.println("Here is the title : "+page.getTitle());
 			
-			System.out.println(page.getWikiText());
+			//System.out.println(page.getWikiText());
 			System.out.println("=============");
 			//here I have to add page.parseTable where parseTable method will be on 
+		    System.out.println(page.getWikiTable());
+			HashSet<String> tables=page.getWikiTable();
 			
+			//System.out.println(page.getText());
+			
+			Iterator<String> itr = tables.iterator();
+			while(itr.hasNext()){
+	           //page.parseHeaders(itr.next());
+	           page.parseRows(itr.next());
+	        }
+		
 			
 		} catch (Exception e) {
 			e.printStackTrace();

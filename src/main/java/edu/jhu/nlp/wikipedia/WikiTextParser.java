@@ -16,6 +16,8 @@ public class WikiTextParser {
 	private Vector<Pair<String, Integer>> linkPos = null;
     private String wikiText = null;
     private HashSet<String> pageCats = null;
+    private HashSet<String> tables = null;
+    private String[] headers = null;
     private HashSet<String> pageLinks = null;
     private boolean redirect = false;
     private String redirectString = null;
@@ -277,4 +279,68 @@ public class WikiTextParser {
         }
         return null;
     }
+    
+    /**
+     * 
+     * parsing tables
+     * 
+     */
+    
+    private static Pattern tagPattern = Pattern.compile("\\{\\{#tag(.*?)\\}\\}", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern alignPattern = Pattern.compile("align=(.*?)\\|", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern bgcolorPattern = Pattern.compile("bgcolor=(.*?)!", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern refPattern = Pattern.compile("<ref.*?/>", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern brPattern = Pattern.compile("<br>", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern refCleanupPattern1 = Pattern.compile("<ref(.*?)>(.*?)\\.</ref>", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern colspanCleanupPattern = Pattern.compile("colspan=(.*?)\\|", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern ntsCleanupPattern = Pattern.compile("nts\\|", Pattern.MULTILINE | Pattern.DOTALL);
+    
+    
+    public void parseTable ()
+    {	   tables = new HashSet<String>();
+    	   Pattern pattern = Pattern.compile("\\{\\|(.*?)\\|\\}", Pattern.MULTILINE | Pattern.DOTALL);
+    	
+           Matcher matcher = pattern.matcher(wikiText);
+           while (matcher.find()) {
+        	   if (matcher.group().length() != 0){
+        		   
+        		   String temp= matcher.group();
+        		   temp= tagPattern.matcher(temp).replaceAll("");
+        		   temp= alignPattern.matcher(temp).replaceAll("");
+        		   temp = bgcolorPattern.matcher(temp).replaceAll("");
+        		   temp = refPattern.matcher(temp).replaceAll("");
+        		   temp = brPattern.matcher(temp).replaceAll("");
+        		   temp = refCleanupPattern.matcher(temp).replaceAll("");
+        		   temp = refCleanupPattern1.matcher(temp).replaceAll("");
+        		   temp = colspanCleanupPattern.matcher(temp).replaceAll("");
+        		   temp = ntsCleanupPattern.matcher(temp).replaceAll("");
+        		   temp = temp.replaceAll("''","");
+        		   temp = temp.replaceAll("'''",""); 
+        		   tables.add(temp);
+     			  }
+           		}
+           }
+    	
+    public HashSet<String> getTables() {
+               if (tables == null) {
+                   parseTable();
+               }
+               return tables;
+    }  
+    /**
+     * Parsing headers
+     */
+  
+ /*   public String[] getHeaders(String table){
+    	
+    	if (headers == null) {
+            parseHeaders(table);
+        }
+        return headers;
+    }
+    
+    */
+    
+
 }
+
