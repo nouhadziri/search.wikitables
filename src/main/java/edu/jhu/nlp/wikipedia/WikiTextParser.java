@@ -288,13 +288,14 @@ public class WikiTextParser {
     
     private static Pattern tagPattern = Pattern.compile("\\{\\{#tag(.*?)\\}\\}", Pattern.MULTILINE | Pattern.DOTALL);
     private static Pattern alignPattern = Pattern.compile("align=(.*?)\\|", Pattern.MULTILINE | Pattern.DOTALL);
-    private static Pattern bgcolorPattern = Pattern.compile("bgcolor=(.*?)!", Pattern.MULTILINE | Pattern.DOTALL);
+    private static Pattern bgcolorPattern = Pattern.compile("\\|\\-\\sbgcolor=(.*?)\\s", Pattern.MULTILINE | Pattern.DOTALL);
     private static Pattern refPattern = Pattern.compile("<ref.*?/>", Pattern.MULTILINE | Pattern.DOTALL);
     private static Pattern brPattern = Pattern.compile("<br>", Pattern.MULTILINE | Pattern.DOTALL);
     private static Pattern refCleanupPattern1 = Pattern.compile("<ref(.*?)>(.*?)\\.</ref>", Pattern.MULTILINE | Pattern.DOTALL);
     private static Pattern colspanCleanupPattern = Pattern.compile("colspan=(.*?)\\|", Pattern.MULTILINE | Pattern.DOTALL);
     private static Pattern ntsCleanupPattern = Pattern.compile("nts\\|", Pattern.MULTILINE | Pattern.DOTALL);
-    
+    //private static Pattern classCleanupPattern = Pattern.compile("\\|class=(.*?)\\s", Pattern.MULTILINE | Pattern.DOTALL);
+
     
     public void parseTable ()
     {	   tables = new HashSet<String>();
@@ -314,6 +315,7 @@ public class WikiTextParser {
         		   temp = refCleanupPattern1.matcher(temp).replaceAll("");
         		   temp = colspanCleanupPattern.matcher(temp).replaceAll("");
         		   temp = ntsCleanupPattern.matcher(temp).replaceAll("");
+        		  // temp = classCleanupPattern.matcher(temp).replaceAll("");
         		   temp = temp.replaceAll("''","");
         		   temp = temp.replaceAll("'''",""); 
         		   tables.add(temp);

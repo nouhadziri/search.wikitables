@@ -49,7 +49,7 @@ public class Wikiparser implements PageCallbackHandler {
 			
 			Iterator<String> itr = tables.iterator();
 			while(itr.hasNext()){
-	           //page.parseHeaders(itr.next());
+	          // page.parseHeaders(itr.next());
 	           page.parseRows(itr.next());
 	        }
 		

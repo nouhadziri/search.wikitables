@@ -148,7 +148,7 @@ public class WikiPage {
     
     public void parseRows (String table)
     {
-    	Pattern pattern = Pattern.compile("\\|\\-(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
+    	Pattern pattern = Pattern.compile("\\|(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
   	   Matcher matcher = pattern.matcher(table);
   	 while(matcher.find()) {
 		  if (matcher.group().length() != 0){
@@ -156,6 +156,26 @@ public class WikiPage {
 			 //System.out.println("le regex: "+regex);
 			// System.out.println("hello");
 			String[]   rows= regex.split("\\|\\|");
+			 
+			for (int i=0;i<rows.length;i++)
+			{
+		  System.out.println("rows: "+rows[i]);
+			}
+			
+			}
+    }}
+    
+    
+    public void parseRows1 (String table)
+    {
+    	Pattern pattern = Pattern.compile("\\|\\-(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
+  	   Matcher matcher = pattern.matcher(table);
+  	 while(matcher.find()) {
+		  if (matcher.group().length() != 0){
+			 String regex = matcher.group(1).substring(2);
+			 //System.out.println("le regex: "+regex);
+			// System.out.println("hello");
+			String[]   rows= regex.split("\\|");
 			 
 			for (int i=0;i<rows.length;i++)
 			{
