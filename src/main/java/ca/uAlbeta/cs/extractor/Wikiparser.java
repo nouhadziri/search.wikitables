@@ -39,18 +39,20 @@ public class Wikiparser implements PageCallbackHandler {
 			
 			System.out.println("Here is the title : "+page.getTitle());
 			
+			System.out.println("Here is the infobox : "+page.getInfoBox());
+			
 			//System.out.println(page.getWikiText());
 			System.out.println("=============");
 			//here I have to add page.parseTable where parseTable method will be on 
-		    System.out.println(page.getWikiTable());
+		   // System.out.println(page.getWikiTable());
 			HashSet<String> tables=page.getWikiTable();
 			
 			//System.out.println(page.getText());
 			
 			Iterator<String> itr = tables.iterator();
 			while(itr.hasNext()){
-	          // page.parseHeaders(itr.next());
-	           page.parseRows(itr.next());
+	          page.parseHeaders(itr.next());
+	          // page.parseRows(itr.next());
 	        }
 		
 			
@@ -77,7 +79,7 @@ public class Wikiparser implements PageCallbackHandler {
 		try {
 			//indexer.indexWikipedia(args[0]);
 			indexer.indexWikipedia("/Users/Nouha/Desktop/enwiki_list_of_cities_in_canada.xml");
-		
+			//indexer.indexWikipedia("/Users/Nouha/Desktop/infobox.xml");
 		} catch (Exception e) {
 			
 			System.exit(1);
