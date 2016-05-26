@@ -1,6 +1,7 @@
 package edu.jhu.nlp.wikipedia;
 
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -103,6 +104,17 @@ public class WikiPage {
     	return wikiTextParser.getTables();
     }
     
+    /**
+     * getTables tree
+     * @param table
+     */
+    
+    public Set<String> getTablesTree()
+    {
+    	//System.out.println(wikiTextParser.getText());
+    	return wikiTextParser.createTable();
+    	//return new HashSet<String>();
+    }
     
     public void parseHeaders (String table)
     {
@@ -135,11 +147,7 @@ public class WikiPage {
     }  
     
    
-   /* public String[] getWikiHeaders(String table){
-    	
-    	return wikiTextParser.getHeaders(table);
-    	
-    }*/
+
     
     /**
      * Parsing rows

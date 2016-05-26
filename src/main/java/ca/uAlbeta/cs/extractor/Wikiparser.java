@@ -28,32 +28,36 @@ public class Wikiparser implements PageCallbackHandler {
 				return;
 			
 			//entity page.
-			String content = page.getText();
+			/*String content = page.getText();
 			if ( title == null || title.isEmpty() || content == null || content.isEmpty() )
 				return;
-			
+			*/
 		
 			String wkstrID = page.getID().trim();
 			System.out.println(wkstrID);
 			Long wikiID = Long.parseLong( wkstrID );
 			
-			System.out.println("Here is the title : "+page.getTitle());
+		//	System.out.println("Here is the title : "+page.getTitle());
 			
-			System.out.println("Here is the infobox : "+page.getInfoBox());
+			//System.out.println("Here is the infobox : "+page.getInfoBox());
 			
 			//System.out.println(page.getWikiText());
 			System.out.println("=============");
 			//here I have to add page.parseTable where parseTable method will be on 
-		   // System.out.println(page.getWikiTable());
-			HashSet<String> tables=page.getWikiTable();
+		  // System.out.println(page.getWikiTable());
+		//	HashSet<String> tables=page.getWikiTable();
 			
 			//System.out.println(page.getText());
 			
-			Iterator<String> itr = tables.iterator();
-			while(itr.hasNext()){
+			//Iterator<String> itr = tables.iterator();
+			/*while(itr.hasNext()){
 	          page.parseHeaders(itr.next());
 	          // page.parseRows(itr.next());
-	        }
+	        }*/
+			
+			
+			System.out.println(page.getTablesTree());
+			
 		
 			
 		} catch (Exception e) {
