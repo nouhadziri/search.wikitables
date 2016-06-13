@@ -31,6 +31,8 @@ public class WikipediaTableParser {
 
 	private static Pattern widthCleanupPattern = Pattern.compile("width=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
 
+	private static Pattern scopeCleanupPattern = Pattern.compile("scope=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
+
 	private static Pattern pipePattern = Pattern.compile("\\|", Pattern.MULTILINE | Pattern.DOTALL);
 
 	public ArrayList<String> breakRows(String table) {
@@ -519,6 +521,7 @@ public class WikipediaTableParser {
 	}
 
 	public boolean translateHeaderRow3(String header) {
+
 		int startPos = 2;
 
 		int bracketCount = 0;
@@ -556,6 +559,16 @@ public class WikipediaTableParser {
 			return true;
 		else
 			return false;
+
+	}
+
+	public String rowWithoutDelimiter(String header) {
+		String header1 = "";
+		char[] headerchar = header.toCharArray();
+		for (int i = 0; i < header.length() - 3; i++) {
+			header1 = header1 + headerchar[i];
+		}
+		return header1;
 	}
 
 	/**
@@ -685,6 +698,7 @@ public class WikipediaTableParser {
 		table = regexAttributeStyle(table);
 		table = regexAttributeAlign(table);
 		table = regexAttributeWidth(table);
+		table = regexAttributeScope(table);
 		rows = breakRows(table);
 
 		int i = 0;
@@ -761,14 +775,20 @@ public class WikipediaTableParser {
 
 		Matcher regexMatcher = classCleanupPattern.matcher(row);
 
+		String rowWithoutDelimiter = rowWithoutDelimiter(row);
 		if ((translateHeaderRow2(row))) {
 			headers = translateHeaderCell2(row);
 		}
 
-		else if ((!translateHeaderRow2(row)) && (regexMatcher.find())) {
+		else if ((!translateHeaderRow2(row)) && (regexMatcher.find()) && (!translateHeaderRow3(rowWithoutDelimiter))) {
 			headers = translateHeaderCell1(row);
-		} else if ((!translateHeaderRow2(row)) && (!regexMatcher.find())) {
+		} else if ((!translateHeaderRow2(row)) && (!regexMatcher.find())
+				&& (!translateHeaderRow3(rowWithoutDelimiter))) {
 			headers = translateHeaderCell3(row);
+		} else {
+			headers = translateCell2(row);
+			// this will work only if we have ! header than normal row separated
+			// by |
 		}
 
 		// for each header cell parse the cell
@@ -1037,10 +1057,10 @@ public class WikipediaTableParser {
 			if (regexMatcher.group().length() != 0) {
 				table = regexMatcher.replaceAll("");
 
-			} else
-				System.out.println("not found !");
+			} /*
+				 * else System.out.println("not found !"); }
+				 */
 		}
-
 		return table;
 
 	}
@@ -1053,9 +1073,10 @@ public class WikipediaTableParser {
 			if (regexMatcher.group().length() != 0) {
 				table = regexMatcher.replaceAll("");
 
-			} else
-				System.out.println("not found !");
-		}
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
 
 		return table;
 
@@ -1069,9 +1090,27 @@ public class WikipediaTableParser {
 			if (regexMatcher.group().length() != 0) {
 				table = regexMatcher.replaceAll("");
 
-			} else
-				System.out.println("not found !");
-		}
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+
+	public String regexAttributeScope(String table) {
+
+		Matcher regexMatcher = scopeCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
 
 		return table;
 
