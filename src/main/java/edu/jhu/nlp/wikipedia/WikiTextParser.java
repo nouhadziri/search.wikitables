@@ -366,7 +366,7 @@ public class WikiTextParser {
 		int endPos = startPos + TABLE_CONST_STR.length();
 		while(endPos < wikiText.length()-1)
 		{
-			//System.out.println("hello");
+			
 			String text = wikiText.substring(endPos,endPos + 2); 
 			switch(text)
 			{
@@ -383,9 +383,13 @@ public class WikiTextParser {
 			}
 			if (bracketCount == 0) 	
 			{  
+				 
 				String table = wikiText.substring(startPos, endPos + 1);
 				tables1.add(table);
 				startPos = endPos+2;
+				//startPos= wikiText.substring(startPos, endPos + 1).indexOf("{|");
+				//String restText = wikiText.substring(endPos+1, wikiText.length()-1);
+				//startPos = restText.indexOf("{|");
 				//Node node= new Node(table,"table","table");
 				//nodes.add(node);	
 			}
@@ -393,7 +397,7 @@ public class WikiTextParser {
 		}
 
 		if (bracketCount != 0) {
-			System.out.println("Malformed tables, couldn't match the brackets.");
+			System.out.println("couldn't match the brackets.");
 		}	
 
 		return tables1;
@@ -415,15 +419,63 @@ public class WikiTextParser {
 	 */
 	public HashSet<String> translateHeaderRow(String table){
 
+		
 
-
+		
+		
 
 
 		return null;
 	}
 
+	public Set<String> breakRows(String table){
+	
+		Set<String> rows = new HashSet<String>();
+		int startRow = 0;
+		int startPos = 0;
+		int bracketCount=1;
+		while (startPos <= table.length()-1)
+		{
+			String text = table.substring(startPos,startPos+2);
+			switch(text)
+			{
+			case "|-":
+				String row = table.substring(startRow, startPos+2);
+				rows.add(row);
+				startPos++;
+				startRow = startPos +1 ;
+				
+				// I should call the method translate cell and check if I have a nested table
+				// should create a row node
+				// I shouldn't create the node here 
+				break;
+			
+			case "{|":
+				bracketCount++;
+				startPos++;
+				break;
+
+			case "|}":
+				bracketCount--;
+				startPos++;
+				break;
+
+			default: startPos++;
+			}
+			
+			if (bracketCount == 0) 	
+			{  
+				String row1 = table.substring(startRow, startPos);
+				rows.add(row1);
+				// I should call the method translate cell and check if I have a nested table
+				// should create a row node
+			}
+		}
+		return rows;
+	}
 
 
 
-}
+
+	}
 

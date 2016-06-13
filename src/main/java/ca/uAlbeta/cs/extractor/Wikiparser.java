@@ -2,6 +2,7 @@ package ca.uAlbeta.cs.extractor;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
@@ -49,11 +50,6 @@ public class Wikiparser implements PageCallbackHandler {
 			
 			//System.out.println(page.getText());
 			
-			//Iterator<String> itr = tables.iterator();
-			/*while(itr.hasNext()){
-	          page.parseHeaders(itr.next());
-	          // page.parseRows(itr.next());
-	        }*/
 			
 			
 			System.out.println(page.getTablesTree());

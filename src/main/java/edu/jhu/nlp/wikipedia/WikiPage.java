@@ -116,6 +116,17 @@ public class WikiPage {
     	//return new HashSet<String>();
     }
     
+    /**
+     * getTable row tree
+     */
+    
+    public Set<String> getTableROw(String table)
+    {
+    	
+    	//return wikiTextParser.translateNormalRow(table);
+    	return null;
+    }
+    
     public void parseHeaders (String table)
     {
     	//headers= new HashSet<String>();
