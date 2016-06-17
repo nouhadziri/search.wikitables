@@ -1,39 +1,39 @@
 package ca.ualberta.wikipedia.tablereader;
 
+
 import java.util.ArrayList;
 import java.util.Iterator;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class WikipediaTableParser {
 
-	// ArrayList<String> rows = new ArrayList<String>();
+
 	ArrayList<String> headerAndRow = new ArrayList<String>();
+
+	RegexTableParser regexparser = new RegexTableParser();
+	
+	
+	CreateTables varTable = new CreateTables();
 
 	int column = 0;
 	int row = 0;
 	String[][] matrix = new String[row][column];
 
-	private static Pattern colspanCleanupPattern = Pattern.compile("colspan=\"\\d+\"",
+	private static Pattern colspanCleanupPattern = Pattern.compile("\\bcolspan\\s*=\\s*\"\\d+\"",
 			Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern rowspanCleanupPattern = Pattern.compile("rowspan=\"\\d+\"",
+	private static Pattern colspanCleanupPattern2 = Pattern.compile("\\bcolspan\\s*=\\s*(\\d)+",
 			Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern classCleanupPattern = Pattern.compile("class=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern attributeCleanupPattern = Pattern.compile("(.*?)=\"(.*?)\"",
+	private static Pattern rowspanCleanupPattern = Pattern.compile("\\browspan\\s*=\\s*\"\\d+\"",
 			Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern styleCleanupPattern = Pattern.compile("style=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern alignCleanupPattern = Pattern.compile("align=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern widthCleanupPattern = Pattern.compile("width=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
-
-	private static Pattern scopeCleanupPattern = Pattern.compile("scope=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern rowspanCleanupPattern2 = Pattern.compile("\\browspan\\s*=\\s*(\\d)+",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern classCleanupPattern = Pattern.compile("\\bclass\\s*=\\s*\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
 
 	private static Pattern pipePattern = Pattern.compile("\\|", Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern newlinePattern = Pattern.compile("\\n", Pattern.MULTILINE | Pattern.DOTALL);
 
 	public ArrayList<String> breakRows(String table) {
 
@@ -117,11 +117,44 @@ public class WikipediaTableParser {
 		while (iter.hasNext()) {
 			String varHeaderCell = iter.next();
 			if (varHeaderCell.contains("colspan")) {
-				String colspan = regexColspan(varHeaderCell);
+				String colspan = regexparser.regexColspan(varHeaderCell);
 				if (colspan == null) {
-					colspan = regexColspanWithNoQuotes(varHeaderCell);
+					colspan = regexparser.regexColspanWithNoQuotes(varHeaderCell);
 				}
-				int digit = Integer.parseInt(extractDigits(colspan));
+				int digit = Integer.parseInt(regexparser.extractDigits(colspan));
+				columnCount = columnCount + digit;
+			} else {
+				columnCount = columnCount + 1;
+			}
+		}
+		return columnCount;
+	}
+	
+
+	public int countColumnsNormalRow(String normalRow) {
+
+		ArrayList<String> rowCells = new ArrayList<String>();
+
+		//Matcher regexMatcher = classCleanupPattern.matcher(normalRow);
+
+		if ((translateNormalRow1(normalRow))) {
+			rowCells = translateCell1(normalRow);
+		}
+
+		else if (translateNormalRow2(normalRow)) {
+			rowCells = translateCell2(normalRow);
+		} 
+		int columnCount = 0;
+
+		Iterator<String> iter = rowCells.iterator();
+		while (iter.hasNext()) {
+			String varRowCell = iter.next();
+			if (varRowCell.contains("colspan")) {
+				String colspan = regexparser.regexColspan(varRowCell);
+				if (colspan == null) {
+					colspan = regexparser.regexColspanWithNoQuotes(varRowCell);
+				}
+				int digit = Integer.parseInt(regexparser.extractDigits(colspan));
 				columnCount = columnCount + digit;
 			} else {
 				columnCount = columnCount + 1;
@@ -135,25 +168,50 @@ public class WikipediaTableParser {
 	 * 
 	 * @param table
 	 */
-	public String[][] createMatrix(String table) {
+	public Cell[][] createMatrix(String table) {
 
 		ArrayList<String> rows = new ArrayList<String>();
 		int row = countRows(table);
 		rows = breakRows(table);
 		String headerRow = null;
+		
+		int column =0;
+		
 		Iterator<String> iter = rows.iterator();
 
 		while (iter.hasNext()) {
 			String varrow = iter.next();
 			if (translateHeaderRow(varrow)) {
 				headerRow = varrow;
+				column = countColumns(headerRow);
 				break;
+			}
+	
+			else if (translateNormalRow1(varrow)){
+				headerRow = varrow;
+				column = countColumnsNormalRow(headerRow);
+				break;
+			}
+			//rowWithoutDelimiter because |- is causing problems so we want to know if there
+			// is normal row separated by /n|
+			else if (translateHeaderRow3(rowWithoutDelimiter(varrow)) && (!varrow.contains("|+"))){
+				String var = rowWithoutDelimiter(varrow);
+				headerRow = varrow;
+				column = countColumnsNormalRow(headerRow);
+				break;
+			}
+			else if (varrow.startsWith("\n|"))
+			{
+				headerRow = varrow;
+			column = countColumnsNormalRow(headerRow);
+			break;
+				
 			}
 
 		}
-		int column = countColumns(headerRow);
+	//	int column = countColumns(headerRow);
 
-		String[][] matrix = new String[row][column];
+		Cell[][] matrix = new Cell[row][column];
 
 		return matrix;
 	}
@@ -233,15 +291,23 @@ public class WikipediaTableParser {
 		ArrayList<String> cells = new ArrayList<String>();
 		int startRow = 2;
 		int startPos = 2;
+		/*int startRow = row.indexOf("|");
+		int startPos = row.indexOf("|");*/
 		int bracketCount = 0;
 		while (startPos < row.length() - 1) {
 			String text = row.substring(startPos, startPos + 2);
 			switch (text) {
 			case "||":
 				if (bracketCount == 0) {
+					try{
 					String cell = row.substring(startRow, startPos - 1);// startPos-1
 					cells.add(cell);
 					startRow = startPos + 2;
+					}
+					catch(IndexOutOfBoundsException e)
+					{
+						System.out.println("table isn't well structured");
+					}
 				}
 				startPos++;
 				break;
@@ -253,7 +319,7 @@ public class WikipediaTableParser {
 
 			case "|}":
 				int bracketindex = row.indexOf("|}", startPos);
-				int tablelength = row.length() - 3;
+				int tablelength = row.length() - 2;
 				if (bracketindex == tablelength) {
 
 					String cell2 = row.substring(startRow, startPos - 1);
@@ -284,7 +350,7 @@ public class WikipediaTableParser {
 	}
 
 	/**
-	 * the good one Method that splits the row into cells and check if there is
+	 * the good one: Method that splits the row into cells and check if there is
 	 * nested tables. the cells here are separated by "| " we didn't parse each
 	 * cell,this will be done by parseCell()
 	 * 
@@ -298,6 +364,8 @@ public class WikipediaTableParser {
 		ArrayList<String> cells = new ArrayList<String>();
 		int startRow = 2;
 		int startPos = 2;
+		//int startRow = row.indexOf("|")+1;
+		//int startPos = row.indexOf("|")+1;
 		int bracketCount = 0;
 		while (startPos < row.length() - 1) {
 			String text = row.substring(startPos, startPos + 2);
@@ -326,7 +394,8 @@ public class WikipediaTableParser {
 			 * row.substring(startRow,startPos -1); cells.add(cell); startRow =
 			 * startPos + 2; }
 			 * 
-			 * startPos++; break;
+			 * startPos++; break;// I commented this because we are using \n| to split and we don't need
+			 * "|-" as our end delimiter cuz we have \n and | wich is from "|-"
 			 */
 
 			default:
@@ -336,92 +405,6 @@ public class WikipediaTableParser {
 
 		}
 		return cells;
-	}
-
-	/**
-	 * Method that extracts colspan = "?" to have the digit afterwards. It does
-	 * not handle colspan =10 without quotes. should mention that to Matteo
-	 * 
-	 * @param colspan
-	 */
-
-	public String regexColspan(String colspan) {
-		Pattern checkRegex = Pattern.compile("colspan=\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
-		Matcher regexMatcher = checkRegex.matcher(colspan);
-		String var = null;
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-
-				var = regexMatcher.group(0);
-
-			}
-		}
-		return var;
-	}
-
-	public String regexColspanWithNoQuotes(String colspan) {
-		Pattern checkRegex = Pattern.compile("colspan=(\\d)+", Pattern.MULTILINE | Pattern.DOTALL);
-		Matcher regexMatcher = checkRegex.matcher(colspan);
-		String var = null;
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-
-				var = regexMatcher.group(0);
-
-			}
-		}
-		return var;
-	}
-
-	/**
-	 * Method that extracts rowspan = "?" to have the digit afterwards
-	 * 
-	 * @param rowspan
-	 * @return
-	 */
-	public String regexRowspanWithNoQuotes(String rowspan) {
-		Pattern checkRegex = Pattern.compile("rowspan=(\\d)+", Pattern.MULTILINE | Pattern.DOTALL);
-		Matcher regexMatcher = checkRegex.matcher(rowspan);
-		String var = null;
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				var = regexMatcher.group(0);
-
-			}
-		}
-		return var;
-	}
-
-	public String regexRowspan(String rowspan) {
-		Pattern checkRegex = Pattern.compile("rowspan=\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
-		Matcher regexMatcher = checkRegex.matcher(rowspan);
-		String var = null;
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-
-				var = regexMatcher.group(0);
-
-			}
-		}
-		return var;
-	}
-
-	/**
-	 * Extract the digit of colspan
-	 * 
-	 * @param colspan
-	 * @return
-	 */
-	public String extractDigits(String src) {
-
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < src.length(); i++) {
-			char c = src.charAt(i);
-			if (Character.isDigit(c)) {
-				builder.append(c);
-			}
-		}
-		return builder.toString();
 	}
 
 	/**
@@ -562,6 +545,14 @@ public class WikipediaTableParser {
 
 	}
 
+	/**
+	 * useful for the case where we have in one single row a header and a row,
+	 * we delete this "|-" delimiter because we want to separate cell using "\n|"
+	 * otherwise it will not work properly
+	 * 
+	 * @param header
+	 * @return
+	 */
 	public String rowWithoutDelimiter(String header) {
 		String header1 = "";
 		char[] headerchar = header.toCharArray();
@@ -689,149 +680,19 @@ public class WikipediaTableParser {
 		return headers;
 	}
 
-	public String[][] parseTable(String table) {
-
-		// create the matrix
-		String[][] matrix = createMatrix(table);
-
-		ArrayList<String> rows = new ArrayList<String>();
-		table = regexAttributeStyle(table);
-		table = regexAttributeAlign(table);
-		table = regexAttributeWidth(table);
-		table = regexAttributeScope(table);
-		rows = breakRows(table);
-
-		int i = 0;
-		for (String row : rows) {
-			String varRow = row;
-			if (translateHeaderRow(row)) {
-				// column = countColumns(row);
-				matrix = parseHeader(row, i, matrix);
-			}
-
-			if (row.startsWith("\n|")) {
-
-				matrix = parseNormalRow(row, i, matrix);
-			}
-
-			i++;
-			if (!translateHeaderRow(row) && i == 0) {
-				i = 0;
-			}
-		}
-		return matrix;
-	}
-
-	private String[][] parseNormalRow(String row, int i, String[][] matrix) {
-
-		ArrayList<String> rowcells = new ArrayList<String>();
-
-		if (translateNormalRow2(row)) {
-			rowcells = translateCell2(row);
-		}
-
-		if ((translateNormalRow1(row))) {
-			rowcells = translateCell1(row);
-		}
-
-		// for each header cell parse the cell
-
-		for (String cell : rowcells) {
-
-			cell = pipePattern.matcher(cell).replaceAll("");
-			if ((cell.contains("colspan")) && (!cell.contains("rowspan"))) {
-
-				int countercolumn = extractColspanDigit(cell);
-				// fill table
-				matrix = fillHorizontal(cell, countercolumn, matrix, i);
-			} else if ((cell.contains("rowspan")) && (!cell.contains("colspan"))) {
-
-				int counterrow = extractRowspanDigit(cell);
-				// fill table
-				matrix = fillVertical(cell, counterrow, matrix, i);
-
-			} else if ((cell.contains("rowspan")) && (cell.contains("colspan"))) {
-
-				int countercolumn = extractColspanDigit(cell);
-				int counterRow = extractRowspanDigit(cell);
-				// fill table
-				matrix = fillHorizontalVertical(cell, countercolumn, counterRow, matrix, i);
-
-			}
-
-			else {
-
-				matrix = fillVertical(cell, 1, matrix, i);
-
-			}
-
-		}
-		return matrix;
-	}
-
-	public String[][] parseHeader(String row, int i, String[][] matrix) {
-
-		ArrayList<String> headers = new ArrayList<String>();
-
-		Matcher regexMatcher = classCleanupPattern.matcher(row);
-
-		String rowWithoutDelimiter = rowWithoutDelimiter(row);
-		if ((translateHeaderRow2(row))) {
-			headers = translateHeaderCell2(row);
-		}
-
-		else if ((!translateHeaderRow2(row)) && (regexMatcher.find()) && (!translateHeaderRow3(rowWithoutDelimiter))) {
-			headers = translateHeaderCell1(row);
-		} else if ((!translateHeaderRow2(row)) && (!regexMatcher.find())
-				&& (!translateHeaderRow3(rowWithoutDelimiter))) {
-			headers = translateHeaderCell3(row);
-		} else {
-			headers = translateCell2(row);
-			// this will work only if we have ! header than normal row separated
-			// by |
-		}
-
-		// for each header cell parse the cell
-		for (String cell : headers) {
-			if ((cell.contains("colspan")) && (!cell.contains("rowspan"))) {
-				// extract the colspan number of the column
-
-				int countercolumn = extractColspanDigit(cell);
-				// fill table
-				matrix = fillHorizontal(cell, countercolumn, matrix, i);
-
-			} else if ((cell.contains("rowspan")) && (!cell.contains("colspan"))) {
-
-				// extract the rowspan number of the column
-
-				int counterrow = extractRowspanDigit(cell);
-				// fill table
-				matrix = fillVertical(cell, counterrow, matrix, i);
-
-			} else if ((cell.contains("rowspan")) && (cell.contains("colspan"))) {
-
-				// extract the colspan number of the column
-				String rowspan = regexRowspan(cell);
-
-				int countercolumn = extractColspanDigit(cell);
-				int counterRow = extractRowspanDigit(cell);
-
-				matrix = fillHorizontalVertical(cell, countercolumn, counterRow, matrix, i);
-
-			} else {
-				matrix = fillVertical(cell, 1, matrix, i);
-			}
-
-		}
-
-		return matrix;
-
-	}
+	/**
+	 * useful for separating cell in a row which is a heder and a normal row at
+	 * the same time
+	 * 
+	 * @param row
+	 * @return
+	 */
 
 	public ArrayList<String> translateHeaderCell3(String row) {
 
 		ArrayList<String> headers = new ArrayList<String>();
 		// int startRow = row.indexOf("!");
+		// int startRow = 2;
 		int startRow = 2;
 		int startPos = 2;
 		int bracketCount = 0;
@@ -875,6 +736,183 @@ public class WikipediaTableParser {
 		return headers;
 	}
 
+	public Cell[][] parseTable(String table) {
+
+		// create the matrix
+		Cell[][] matrix = createMatrix(table);
+
+		ArrayList<String> rows = new ArrayList<String>();
+		table = regexparser.regexAttributeStyle(table);
+		table = regexparser.regexAttributeAlign(table);
+		table = regexparser.regexAttributeValign(table);
+		table = regexparser.regexAttributeWidth(table);
+		table = regexparser.regexAttributeScope(table);
+		table = regexparser.regexAttributeSpan(table);
+		table = regexparser.regexRef(table);
+		table = regexparser.regexAttributeBgcolor(table);
+		rows = breakRows(table);
+
+		int i = 0;
+		for (String row : rows) {
+			if (translateHeaderRow(row)) {	
+				matrix = parseHeader(row, i, matrix);
+			}
+
+			if ((row.startsWith("\n|")) || (row.startsWith(" \n|")) || (row.startsWith("  \n|"))) {
+
+				matrix = parseNormalRow(row, i, matrix);
+			}
+		/*	else if (translateHeaderRow3(row)) {
+
+				matrix = parseNormalRow(row, i, matrix);
+			}*/
+
+			i++;
+			if (!translateHeaderRow(row) && i == 0) {
+				i = 0;
+			}
+		}
+		return matrix;
+	}
+	
+	public void getAllMatrixFromTables(String wikiText)
+	{
+		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
+		Cell[][] matrix = null;
+		ArrayList<String> tables = varTable.createTable(wikiText);
+		//System.out.println(tables);
+		for(String table : tables)
+		{
+			matrix =parseTable(table);
+			matrixTables.add(matrix);
+		}
+		
+		
+		for (Cell[][] wikimatrix : matrixTables)
+		{
+			for (int i = 0; i < wikimatrix.length; i++) {
+				for (int j = 0; j < wikimatrix[0].length; j++) {
+						try{
+							if (wikimatrix[i][j].getContent() == null)
+							{
+								continue;
+							}
+					System.out.print(wikimatrix[i][j].getContent()+" ");}
+						catch(java.lang.NullPointerException e)
+						{
+							//System.out.print("");
+					}}
+			
+				System.out.print("\n");
+				//System.out.print("");
+				
+			}
+		}
+		
+	}
+
+	private Cell[][] parseNormalRow(String row, int i, Cell[][] matrix) {
+
+		ArrayList<String> rowcells = new ArrayList<String>();
+		String type="Normal Cell";
+		if (translateNormalRow2(row)) {
+			rowcells = translateCell2(row);
+		}
+
+		if ((translateNormalRow1(row))) {
+			rowcells = translateCell1(row);
+		}
+
+		// for each header cell parse the cell
+
+		for (String cell : rowcells) {
+					
+			//cell = pipePattern.matcher(cell).replaceAll("");
+			cell = cell.trim();
+			
+			matrix = parseCell(cell,i,matrix,type);
+		}
+		return matrix;
+	}
+
+	public Cell[][] parseHeader(String row, int i, Cell[][] matrix) {
+
+		ArrayList<String> headers = new ArrayList<String>();
+
+		Matcher regexMatcher = classCleanupPattern.matcher(row);
+		String type ="header";
+		
+		String rowWithoutDelimiter = rowWithoutDelimiter(row);
+		if ((translateHeaderRow2(row))) {
+			headers = translateHeaderCell2(row);
+		}
+
+		else if ((!translateHeaderRow2(row)) && (regexMatcher.find()) && (!translateHeaderRow3(rowWithoutDelimiter))) {
+			headers = translateHeaderCell1(row);
+		} else if ((!translateHeaderRow2(row)) && (!regexMatcher.find())
+				&& (!translateHeaderRow3(rowWithoutDelimiter))) {
+			headers = translateHeaderCell3(row);
+		} else {
+			headers = translateCell2(row);
+			// this will work only if we have ! header than normal row separated
+			// by |
+		}
+
+		// for each header cell parse the cell
+		for (String cell : headers) {
+			cell = pipePattern.matcher(cell).replaceAll("");
+			cell = newlinePattern.matcher(cell).replaceAll("");
+			cell = cell.trim();
+
+			matrix = parseCell(cell,i,matrix,type);
+
+		}
+
+		return matrix;
+	}
+	
+	public Cell[][] parseCell(String cell, int i, Cell[][] matrix,String type)
+	{  
+		Cell [][] cellTable;
+		ArrayList<String> var = varTable.createTable(cell);
+		if (var.isEmpty())
+		{ 
+			//cell = pipePattern.matcher(cell).replaceAll("");
+		if ((cell.contains("colspan")) && (!cell.contains("rowspan"))) {
+			// extract the colspan number of the column
+
+			int countercolumn = regexparser.extractColspanDigit(cell);
+			// fill table
+			matrix = fillHorizontal(cell, countercolumn, matrix, i,type);
+
+		} else if ((cell.contains("rowspan")) && (!cell.contains("colspan"))) {
+
+			// extract the rowspan number of the column
+
+			int counterrow = regexparser.extractRowspanDigit(cell);
+			// fill table
+			matrix = fillVertical(cell, counterrow, matrix, i,type);
+
+		} else if ((cell.contains("rowspan")) && (cell.contains("colspan"))) {
+
+			// extract the colspan number of the column
+		String rowspan =regexparser.regexRowspan(cell);
+
+			int countercolumn = regexparser.extractColspanDigit(cell);
+			int counterRow = regexparser.extractRowspanDigit(cell);
+
+			matrix = fillHorizontalVertical(cell, countercolumn, counterRow, matrix, i,type);
+
+		} else {
+			matrix = fillVertical(cell, 1, matrix, i,type);
+		}
+	}
+		else {cellTable = parseTable(cell);
+		String cellTableString = ConvertArrayToString(cell);
+				matrix = fillVertical(cellTableString, 1, matrix, i,type); }
+		return matrix;
+	}
+
 	/**
 	 * Method that fills table horizontally
 	 * 
@@ -884,10 +922,14 @@ public class WikipediaTableParser {
 	 * @param i
 	 * @return
 	 */
-	public String[][] fillHorizontal(String cellvalue, int numberContent, String[][] table, int i) {
+	public Cell[][] fillHorizontal(String cellvalue, int numberContent, Cell[][] table, int i,String type) {
 
 		cellvalue = colspanCleanupPattern.matcher(cellvalue).replaceAll("");
+		cellvalue = colspanCleanupPattern2.matcher(cellvalue).replaceAll("");
+		cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 
+		//cellvalue = .matcher(cellvalue).replaceAll("");
 		int j = 0;
 		while (table[i][j] != null) {
 			try {
@@ -902,7 +944,10 @@ public class WikipediaTableParser {
 
 		while (numberContent > 0) {
 			try {
-				table[i][j] = cellvalue;
+				Cell cell1 = new Cell(type,cellvalue);
+				table[i][j] = cell1;
+				//table[i][j].setContent(cellvalue);
+				//table[i][j].setType(type);
 				numberContent--;
 				j++;
 			} catch (ArrayIndexOutOfBoundsException e) {
@@ -925,13 +970,16 @@ public class WikipediaTableParser {
 	 * @return
 	 */
 
-	public String[][] fillVertical(String cellvalue, int numberContent, String[][] table, int i) {
+	public Cell[][] fillVertical(String cellvalue, int numberContent, Cell[][] table, int i,String type) {
 
 		if (cellvalue.contains("rowspan")) {
 			cellvalue = rowspanCleanupPattern.matcher(cellvalue).replaceAll("");
+			cellvalue = rowspanCleanupPattern2.matcher(cellvalue).replaceAll("");
 		}
+		cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 		int j = 0;
-
+try{
 		while (table[i][j] != null) {
 			try {
 				j++;
@@ -942,10 +990,16 @@ public class WikipediaTableParser {
 				System.out.println("table isn't well structured");
 			}
 		}
+}catch(ArrayIndexOutOfBoundsException e)
+{
+	System.out.println("table isn't well structured");
+}
 
 		while (numberContent > 0) {
 			try {
-				table[i][j] = cellvalue;
+				Cell cell1 = new Cell(type,cellvalue);
+				table[i][j] = cell1;
+				
 				numberContent--;
 				i++;
 			} catch (ArrayIndexOutOfBoundsException e) {
@@ -969,12 +1023,15 @@ public class WikipediaTableParser {
 	 * @return
 	 */
 
-	public String[][] fillHorizontalVertical(String cellvalue, int counterColumn, int counterRow, String[][] table,
-			int i) {
+	public Cell[][] fillHorizontalVertical(String cellvalue, int counterColumn, int counterRow, Cell[][] table,
+			int i,String type) {
 		if (cellvalue.contains("rowspan") && cellvalue.contains("colspan")) {
 			cellvalue = rowspanCleanupPattern.matcher(cellvalue).replaceAll("");
 			cellvalue = colspanCleanupPattern.matcher(cellvalue).replaceAll("");
+			
 		}
+		cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 		int j = 0;
 		while (table[i][j] != null) {
 			try {
@@ -994,7 +1051,10 @@ public class WikipediaTableParser {
 		for (m = i; m < finrow; m++) {
 			for (n = j; n < fincolumn; n++) {
 				try {
-					table[m][n] = cellvalue;
+					//table[m][n].setContent(cellvalue);
+					//table[m][n].setType(type);
+					Cell cell1 = new Cell(type,cellvalue);
+					table[m][n] = cell1;
 				}
 
 				catch (ArrayIndexOutOfBoundsException e) {
@@ -1013,131 +1073,34 @@ public class WikipediaTableParser {
 	 * @param table
 	 */
 	public void printoutMatrix(String table) {
-		String[][] matrix = parseTable(table);
+		Cell[][] matrix = parseTable(table);
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
-				System.out.print(matrix[i][j] + " ");
-			}
+					try{
+						if (matrix[i][j].getContent() == null)
+						{
+							continue;
+						}
+				System.out.print(matrix[i][j].getContent()+" ");}
+					catch(java.lang.NullPointerException e)
+					{
+						//System.out.print("");
+				}}
+		
 			System.out.print("\n");
-		}
+		}}
+	
+	
+	public String ConvertArrayToString(String table)
+	{	StringBuilder builder = new StringBuilder();
+		Cell[][] matrix = parseTable(table);
+	for (int i = 0; i < matrix.length; i++) {
+		for (int j = 0; j < matrix[0].length; j++) {
+			builder.append(matrix[i][j].getContent());
+		}}
+		return builder.toString();
+	}
+	
+	
 	}
 
-	public boolean startwith(String row) {
-		if (row.startsWith("\n|")) {
-			return true;
-		} else
-			return false;
-	}
-
-	public ArrayList<String> cleanRows(String table) {
-
-		ArrayList<String> rows = new ArrayList<String>();
-		ArrayList<String> rows1 = new ArrayList<String>();
-		rows = breakRows(table);
-		// System.out.println(rows);
-		for (String row : rows) {
-
-			row = classCleanupPattern.matcher(row).replaceAll("");
-			if (row == "\n|-") {
-				row = row.replaceAll("\n|-", "");
-			}
-			rows1.add(row);
-			// System.out.println(row);
-
-		}
-
-		return rows1;
-	}
-
-	public String regexAttributeStyle(String table) {
-
-		Matcher regexMatcher = styleCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			} /*
-				 * else System.out.println("not found !"); }
-				 */
-		}
-		return table;
-
-	}
-
-	public String regexAttributeAlign(String table) {
-
-		Matcher regexMatcher = alignCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			}
-			/*
-			 * else System.out.println("not found !"); }
-			 */}
-
-		return table;
-
-	}
-
-	public String regexAttributeWidth(String table) {
-
-		Matcher regexMatcher = widthCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			}
-			/*
-			 * else System.out.println("not found !"); }
-			 */}
-
-		return table;
-
-	}
-
-	public String regexAttributeScope(String table) {
-
-		Matcher regexMatcher = scopeCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			}
-		} /*
-			 * else System.out.println("not found !"); }
-			 */
-
-		return table;
-
-	}
-
-	public int extractColspanDigit(String cell) {
-		String colspan = regexColspan(cell);
-		if (colspan == null) {
-			colspan = regexColspanWithNoQuotes(cell);
-		}
-		String counter = extractDigits(colspan);
-		int countercolumn = Integer.parseInt(counter);
-
-		return countercolumn;
-	}
-
-	public int extractRowspanDigit(String cell) {
-		String rowspan = regexRowspan(cell);
-
-		if (rowspan == null) {
-			rowspan = regexRowspanWithNoQuotes(cell);
-		}
-		String counter = extractDigits(rowspan);
-		int counterrow = Integer.parseInt(counter);
-
-		return counterrow;
-
-	}
-
-}
