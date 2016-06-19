@@ -61,7 +61,7 @@ public class WikipediaTableParser {
 
 			case "|}":
 				int bracketindex = table.indexOf("|}", startPos);
-				int tablelength = table.length() - 3;
+				int tablelength = table.length() - 2;
 				String rowdelimiter = table.substring(startPos - 3, startPos - 1);
 				if (bracketindex == tablelength) {
 					if (!rowdelimiter.equalsIgnoreCase("|-")) {
