@@ -4,261 +4,277 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RegexTableParser {
-	//private static Pattern styleCleanupPattern = Pattern.compile("\\bstyle=\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
+	// private static Pattern styleCleanupPattern =
+	// Pattern.compile("\\bstyle=\"(.*?)\"", Pattern.MULTILINE |
+	// Pattern.DOTALL);
 
-		//private static Pattern styleCleanupPattern = Pattern.compile("\\bstyle\\s*=\\s*\"(.*?)\"", Pattern.MULTILINE | Pattern.DOTALL);
-		
-		private static Pattern alignCleanupPattern = Pattern.compile("\\balign\\s*=\\s*\"(.*?)\"(.*?)\\|?", Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern styleCleanupPattern = Pattern.compile("\\b\\s?style\\s*=\\s*\"(.*?)\"(.*?)\\|?", Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern widthCleanupPattern = Pattern.compile("\\bwidth\\s*=\\s*\"(.*?)\"\\|?", Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern bgcolorCleanupPattern = Pattern.compile("\\bbgcolor\\s*=\\s*\"(.*?)\"\\|?", Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern scopeCleanupPattern = Pattern.compile("\\bscope\\s*=\\s*\"(.*?)\"\\|?", Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern valignCleanupPattern = Pattern.compile("\\bvalign\\s*=\\s*\"(.*?)\"\\|?", Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern refCleanupPattern = Pattern.compile("<ref(.*?)>.*?</ref>",
-				Pattern.MULTILINE | Pattern.DOTALL);
-		private static Pattern spanCleanupPattern = Pattern.compile("<span(.*?)>", Pattern.MULTILINE | Pattern.DOTALL);
+	// private static Pattern styleCleanupPattern =
+	// Pattern.compile("\\bstyle\\s*=\\s*\"(.*?)\"", Pattern.MULTILINE |
+	// Pattern.DOTALL);
 
-		/**
-		 * Method that extracts colspan = "?" to have the digit afterwards. It does
-		 * not handle colspan =10 without quotes. should mention that to Matteo
-		 * 
-		 * @param colspan
-		 */
+	private static Pattern alignCleanupPattern = Pattern.compile("\\balign\\s*=\\s*\"(.*?)\"(.*?)\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern alignCleanupPattern2 = Pattern.compile("\\balign\\s*=\\s*(.*?)\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern styleCleanupPattern = Pattern.compile("\\b\\s?style\\s*=\\s*\"(.*?)\"(.*?)\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern widthCleanupPattern = Pattern.compile("\\bwidth\\s*=\\s*\"(.*?)\"\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern bgcolorCleanupPattern = Pattern.compile("\\bbgcolor\\s*=\\s*\"(.*?)\"\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern scopeCleanupPattern = Pattern.compile("\\bscope\\s*=\\s*\"(.*?)\"\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern valignCleanupPattern = Pattern.compile("\\bvalign\\s*=\\s*\"(.*?)\"\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern refCleanupPattern = Pattern.compile("<ref(.*?)>.*?</ref>",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern spanCleanupPattern = Pattern.compile("<span(.*?)>", Pattern.MULTILINE | Pattern.DOTALL);
 
-		public String regexColspan(String colspan) {
-			//Pattern checkRegex = Pattern.compile("\\bcolspan\\b=\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
-			Pattern checkRegex = Pattern.compile("\\bcolspan\\s*=\\s*\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
-			Matcher regexMatcher = checkRegex.matcher(colspan);
-			String var = null;
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
+	/**
+	 * Method that extracts colspan = "?" to have the digit afterwards. It does
+	 * not handle colspan =10 without quotes. should mention that to Matteo
+	 * 
+	 * @param colspan
+	 */
 
-					var = regexMatcher.group(0);
+	public String regexColspan(String colspan) {
+		// Pattern checkRegex = Pattern.compile("\\bcolspan\\b=\"\\d+\"",
+		// Pattern.MULTILINE | Pattern.DOTALL);
+		Pattern checkRegex = Pattern.compile("\\bcolspan\\s*=\\s*\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
+		Matcher regexMatcher = checkRegex.matcher(colspan);
+		String var = null;
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
 
-				}
+				var = regexMatcher.group(0);
+
 			}
-			return var;
 		}
+		return var;
+	}
 
-		public String regexColspanWithNoQuotes(String colspan) {
-			Pattern checkRegex = Pattern.compile("\\bcolspan\\s*=\\s*(\\d)+", Pattern.MULTILINE | Pattern.DOTALL);
-			Matcher regexMatcher = checkRegex.matcher(colspan);
-			String var = null;
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
+	public String regexColspanWithNoQuotes(String colspan) {
+		Pattern checkRegex = Pattern.compile("\\bcolspan\\s*=\\s*(\\d)+", Pattern.MULTILINE | Pattern.DOTALL);
+		Matcher regexMatcher = checkRegex.matcher(colspan);
+		String var = null;
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
 
-					var = regexMatcher.group(0);
+				var = regexMatcher.group(0);
 
-				}
 			}
-			return var;
 		}
+		return var;
+	}
 
-		/**
-		 * Method that extracts rowspan = "?" to have the digit afterwards
-		 * 
-		 * @param rowspan
-		 * @return
-		 */
-		public String regexRowspanWithNoQuotes(String rowspan) {
-			Pattern checkRegex = Pattern.compile("\\browspan\\s*=\\s*(\\d)+", Pattern.MULTILINE | Pattern.DOTALL);
-			Matcher regexMatcher = checkRegex.matcher(rowspan);
-			String var = null;
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					var = regexMatcher.group(0);
+	/**
+	 * Method that extracts rowspan = "?" to have the digit afterwards
+	 * 
+	 * @param rowspan
+	 * @return
+	 */
+	public String regexRowspanWithNoQuotes(String rowspan) {
+		Pattern checkRegex = Pattern.compile("\\browspan\\s*=\\s*(\\d)+", Pattern.MULTILINE | Pattern.DOTALL);
+		Matcher regexMatcher = checkRegex.matcher(rowspan);
+		String var = null;
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				var = regexMatcher.group(0);
 
-				}
 			}
-			return var;
 		}
+		return var;
+	}
 
-		public String regexRowspan(String rowspan) {
-			Pattern checkRegex = Pattern.compile("\\browspan\\s*=\\s*\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
-			Matcher regexMatcher = checkRegex.matcher(rowspan);
-			String var = null;
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
+	public String regexRowspan(String rowspan) {
+		Pattern checkRegex = Pattern.compile("\\browspan\\s*=\\s*\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
+		Matcher regexMatcher = checkRegex.matcher(rowspan);
+		String var = null;
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
 
-					var = regexMatcher.group(0);
+				var = regexMatcher.group(0);
 
-				}
 			}
-			return var;
 		}
+		return var;
+	}
 
-		/**
-		 * Extract the digit of colspan
-		 * 
-		 * @param colspan
-		 * @return
-		 */
-		public String extractDigits(String src) {
+	/**
+	 * Extract the digit of colspan
+	 * 
+	 * @param colspan
+	 * @return
+	 */
+	public String extractDigits(String src) {
 
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < src.length(); i++) {
-				char c = src.charAt(i);
-				if (Character.isDigit(c)) {
-					builder.append(c);
-				}
+		StringBuilder builder = new StringBuilder();
+		for (int i = 0; i < src.length(); i++) {
+			char c = src.charAt(i);
+			if (Character.isDigit(c)) {
+				builder.append(c);
 			}
-			return builder.toString();
 		}
+		return builder.toString();
+	}
 
-		public String regexAttributeStyle(String table) {
+	public String regexAttributeStyle(String table) {
 
-			Matcher regexMatcher = styleCleanupPattern.matcher(table);
+		Matcher regexMatcher = styleCleanupPattern.matcher(table);
 
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
 
-				} /*
-					 * else System.out.println("not found !"); }
-					 */
-			}
-			return table;
-
-		}
-
-		public String regexAttributeAlign(String table) {
-
-			Matcher regexMatcher = alignCleanupPattern.matcher(table);
-
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
-
-				}
-				/*
-				 * else System.out.println("not found !"); }
-				 */}
-
-			return table;
-
-		}
-		public String regexAttributeBgcolor(String table) {
-
-			Matcher regexMatcher = bgcolorCleanupPattern.matcher(table);
-
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
-
-				}
-				/*
-				 * else System.out.println("not found !"); }
-				 */}
-
-			return table;
-
-		}
-		public String regexAttributeValign(String table) {
-
-			Matcher regexMatcher = valignCleanupPattern.matcher(table);
-
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
-
-				}
-				/*
-				 * else System.out.println("not found !"); }
-				 */}
-
-			return table;
-
-		}
-		public String regexAttributeWidth(String table) {
-
-			Matcher regexMatcher = widthCleanupPattern.matcher(table);
-
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
-
-				}
-				/*
-				 * else System.out.println("not found !"); }
-				 */}
-
-			return table;
-
-		}
-
-		public String regexAttributeScope(String table) {
-
-			Matcher regexMatcher = scopeCleanupPattern.matcher(table);
-
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
-
-				}
 			} /*
 				 * else System.out.println("not found !"); }
 				 */
-
-			return table;
-
 		}
+		return table;
 
-		public String regexAttributeSpan(String table) {
+	}
 
-			Matcher regexMatcher = spanCleanupPattern.matcher(table);
+	public String regexAttributeAlign(String table) {
 
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
+		Matcher regexMatcher = alignCleanupPattern.matcher(table);
 
-				}
-			} /*
-				 * else System.out.println("not found !"); }
-				 */
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
 
-			return table;
-
-		}
-
-		public String regexRef(String table) {
-
-			Matcher regexMatcher = refCleanupPattern.matcher(table);
-
-			while (regexMatcher.find()) {
-				if (regexMatcher.group().length() != 0) {
-					table = regexMatcher.replaceAll("");
-
-				}
-			} /*
-				 * else System.out.println("not found !"); }
-				 */
-
-			return table;
-
-		}
-
-		public int extractColspanDigit(String cell) {
-			String colspan = regexColspan(cell);
-			if (colspan == null) {
-				colspan = regexColspanWithNoQuotes(cell);
 			}
-			String counter = extractDigits(colspan);
-			int countercolumn = Integer.parseInt(counter);
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
 
-			return countercolumn;
-		}
+		return table;
 
-		public int extractRowspanDigit(String cell) {
-			String rowspan = regexRowspan(cell);
+	}
 
-			if (rowspan == null) {
-				rowspan = regexRowspanWithNoQuotes(cell);
+	public String regexAttributeBgcolor(String table) {
+
+		Matcher regexMatcher = bgcolorCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
 			}
-			String counter = extractDigits(rowspan);
-			int counterrow = Integer.parseInt(counter);
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
 
-			return counterrow;
+		return table;
 
+	}
+
+	public String regexAttributeValign(String table) {
+
+		Matcher regexMatcher = valignCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+
+	public String regexAttributeWidth(String table) {
+
+		Matcher regexMatcher = widthCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+
+	public String regexAttributeScope(String table) {
+
+		Matcher regexMatcher = scopeCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
+
+		return table;
+
+	}
+
+	public String regexAttributeSpan(String table) {
+
+		Matcher regexMatcher = spanCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
+
+		return table;
+
+	}
+
+	public String regexRef(String table) {
+
+		Matcher regexMatcher = refCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
+
+		return table;
+
+	}
+
+	public int extractColspanDigit(String cell) {
+		String colspan = regexColspan(cell);
+		if (colspan == null) {
+			colspan = regexColspanWithNoQuotes(cell);
 		}
+		String counter = extractDigits(colspan);
+		int countercolumn = Integer.parseInt(counter);
+
+		return countercolumn;
+	}
+
+	public int extractRowspanDigit(String cell) {
+		String rowspan = regexRowspan(cell);
+
+		if (rowspan == null) {
+			rowspan = regexRowspanWithNoQuotes(cell);
+		}
+		String counter = extractDigits(rowspan);
+		int counterrow = Integer.parseInt(counter);
+
+		return counterrow;
+
+	}
 
 }
