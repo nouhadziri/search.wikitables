@@ -1,5 +1,7 @@
 package edu.jhu.nlp.wikipedia;
 
+
+
 public class IteratorHandler implements PageCallbackHandler {
 
 	private WikiXMLParser parser = null;
@@ -11,5 +13,7 @@ public class IteratorHandler implements PageCallbackHandler {
 	public void process(WikiPage page) {
 		parser.notifyPage(page);
 	}
+
+	
 
 }

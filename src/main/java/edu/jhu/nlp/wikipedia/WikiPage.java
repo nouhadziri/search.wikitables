@@ -1,10 +1,14 @@
 package edu.jhu.nlp.wikipedia;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import ca.ualberta.wikipedia.tablereader.Cell;
+import ca.ualberta.wikipedia.tablereader.WikipediaTableParser;
 
 
 /**
@@ -34,7 +38,17 @@ public class WikiPage {
      * @param wtext wiki-formatted text
      */
     public void setWikiText(final String wtext) {
-        wikiTextParser = new WikiTextParser(wtext);
+    	
+    	//table parser does not account for extra white space 
+    	//rm extra white space between new line and next char 
+    	Pattern tooMuchSpace = Pattern.compile("\n\\s+");
+    	Matcher matcher = tooMuchSpace.matcher(wtext);
+    	String wikiText = wtext;
+    	while (matcher.find()) {
+			wikiText=matcher.replaceAll("\n");
+		}
+    	
+        wikiTextParser = new WikiTextParser(wikiText);
     }
 
     /**
@@ -95,115 +109,6 @@ public class WikiPage {
     public String getWikiText() {
         return wikiTextParser.getText();
     }
-    
-    /**
-     * Use this method to get wiki tables
-     * @return
-     */
-    public HashSet<String> getWikiTable(){
-    	return wikiTextParser.getTables();
-    }
-    
-    /**
-     * getTables tree
-     * @param table
-     */
-    
-    public Set<String> getTablesTree()
-    {
-    	//System.out.println(wikiTextParser.getText());
-    	return wikiTextParser.createTable();
-    	//return new HashSet<String>();
-    }
-    
-    /**
-     * getTable row tree
-     */
-    
-    public Set<String> getTableROw(String table)
-    {
-    	
-    	//return wikiTextParser.translateNormalRow(table);
-    	return null;
-    }
-    
-    public void parseHeaders (String table)
-    {
-    	//headers= new HashSet<String>();
-    	 Pattern pattern = Pattern.compile("!(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
-    	   Matcher matcher = pattern.matcher(table);
-           while (matcher.find()) {
-        	   if (matcher.group().length() != 0){
-        		   
-        		   String[] headers= matcher.group(1).split("!");
-        		   
-        		   
-        		   for (int i=0;i< headers.length;i++)
-        	         {
-        			    headers[i]= headers[i].replaceAll("<ref.*?>.*?</ref>", " ");
-        			    headers[i]= headers[i].replaceAll("<ref.*?/>", " ");
-        			    headers[i]= headers[i].replaceAll("<br>", " ");
-        			    headers[i]= headers[i].replaceAll("colspan=.*?\\|", " ");
-        			    headers[i]= headers[i].replaceAll("'''", " ");
-        			    
-        	        	System.out.println("headers: "+ headers[i]); 
-        	         }
-        		   /*for(int i=0; i<header.length; i++){
-        		   headers.add(header[i]);
-        		   }*/
-     			  }
-       
-           		}
-    	 
-    }  
-    
-   
-
-    
-    /**
-     * Parsing rows
-     */
- 
-    
-    public void parseRows (String table)
-    {
-    	Pattern pattern = Pattern.compile("\\|(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
-  	   Matcher matcher = pattern.matcher(table);
-  	 while(matcher.find()) {
-		  if (matcher.group().length() != 0){
-			 String regex = matcher.group(1).substring(2);
-			 //System.out.println("le regex: "+regex);
-			// System.out.println("hello");
-			String[]   rows= regex.split("\\|\\|");
-			 
-			for (int i=0;i<rows.length;i++)
-			{
-		  System.out.println("rows: "+rows[i]);
-			}
-			
-			}
-    }}
-    
-    
-    public void parseRows1 (String table)
-    {
-    	Pattern pattern = Pattern.compile("\\|\\-(.*?)\\|\\-", Pattern.MULTILINE | Pattern.DOTALL);
-  	   Matcher matcher = pattern.matcher(table);
-  	 while(matcher.find()) {
-		  if (matcher.group().length() != 0){
-			 String regex = matcher.group(1).substring(2);
-			 //System.out.println("le regex: "+regex);
-			// System.out.println("hello");
-			String[]   rows= regex.split("\\|");
-			 
-			for (int i=0;i<rows.length;i++)
-			{
-		  System.out.println("rows: "+rows[i]);
-			}
-			
-			}
-    }}
-    
 
     /**
      * @return true if this is a redirection page
@@ -268,4 +173,65 @@ public class WikiPage {
     public String getID() {
         return id;
     }
+    
+    /**
+     * Parsing tables
+     */
+    
+    public void getAllMatrix()
+    {
+    	ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
+
+		matrixTables = wikiTextParser.getAllMatrixFromTables();
+
+		for (Cell[][] wikimatrix : matrixTables) {
+			for (int i = 0; i < wikimatrix.length; i++) {
+				for (int j = 0; j < wikimatrix[0].length; j++) {
+					try {
+						if (wikimatrix[i][j].getContent() == null) {
+							continue;
+						}
+						System.out.print(wikimatrix[i][j].getContent() + " ");
+					} catch (java.lang.NullPointerException e) {
+						// System.out.print("");
+					}
+				}
+
+				System.out.print("\n");
+
+			}
+		}
+
+    }
+    
+public int getCountColspan()
+{
+	return wikiTextParser.countColspan();
+}
+
+public int getCountRowspan()
+{
+	return wikiTextParser.countRowspan();
+}
+
+public int getCountMixRowandColumn()
+{
+	return wikiTextParser.countMixColspanAndRowspan();
+}
+
+public int getCountNestedTable()
+{
+	return wikiTextParser.countNestedtables();
+}
+
+public int getCountTable()
+{
+	return wikiTextParser.countTable();
+}
+
+public int getCountExceptions()
+{
+	return wikiTextParser.counthasException();
+}
+
 }

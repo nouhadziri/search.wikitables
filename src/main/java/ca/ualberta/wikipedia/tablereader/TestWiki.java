@@ -13,7 +13,7 @@ public static void main(String[] args) throws IOException {
 		//System.out.println(read.readFile("/Users/Nouha/Desktop/file"));
 
 		WikipediaTableParser wikiparser1 = new WikipediaTableParser();
-		CreateTables tables = new CreateTables();
+		//CreateTables tables = new CreateTables();
 		
 		//System.out.println(wikiparser1.translateHeaderCell2(read.readFile("/Users/Nouha/Desktop/file")));
 		//System.out.println(wikiparser1.translateHeaderCell1(read.readFile("/Users/Nouha/Desktop/file")));
@@ -45,7 +45,16 @@ public static void main(String[] args) throws IOException {
 		
 		//System.out.println(wikiparser1.getAllMatrixFromTables(read.readFile("/Users/Nouha/Desktop/file")));
 		
-		wikiparser1.getAllMatrixFromTables(read.readFile("/Users/Nouha/Desktop/file"));
+	//	wikiparser1.printAllMatrixFromTables(read.readFile("/Users/Nouha/Desktop/file"));
+	/*	System.out.println("\n");
+		System.out.println("***** Statistics *****");
+	System.out.println("Number of tables  : "+wikiparser1.countTable(read.readFile("/Users/Nouha/Desktop/file")));
+		System.out.println("Number of tables having colspan attribute : "+wikiparser1.countColspan());
+		System.out.println("Number of tables having rowspan attribute : "+wikiparser1.countRowspan());
+		System.out.println("Number of tables having mix rowspan and colspan attribute : "+wikiparser1.countMixColspanAndRowspan());
+		System.out.println("Number of tables having nested table : "+wikiparser1.countNestedtables());
+		System.out.println("Number of tables having exception : "+ wikiparser1.counthasException());
+		System.out.println(wikiparser1.CountSymbole(read.readFile("/Users/Nouha/Desktop/file")));*/
 	}
 
 }
