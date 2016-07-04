@@ -306,13 +306,29 @@ public class WikiTextParser {
 	
 	ArrayList<Table> tableswikipedia = new 	ArrayList<Table>();
 	
+	ArrayList<String> headers = new ArrayList<String>();
+	
+	int numberCellOnlyColspan=0;
+	int numberCellOnlyRowspan =0;
+	int numberCellColspanAndRowspan =0;
+	int numberNestedTables = 0;
+	
+	int numberTableOnlyRowspan =0;
+	int numberTableOnlyColspan =0;
+	int numberTableColspanAndRowspan =0;
+			
+	
 	int numTable =0;
 	
-	public boolean hasRowspan;
-	public boolean hasColspan;
+	public boolean hasOnlyRowspan;
+	public boolean hasOnlyColspan;
 	public boolean hasMixRowspanAndColspan;
 	public boolean hasNestedTable;
 	public boolean hasException;
+	public boolean hasNoHeader;
+	public boolean hasCaption;
+	public boolean hasMisuseException;
+
 
 	int column = 0;
 	int row = 0;
@@ -332,6 +348,7 @@ public class WikiTextParser {
 	private static Pattern pipePattern = Pattern.compile("\\|", Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern newlinePattern = Pattern.compile("\\n", Pattern.MULTILINE | Pattern.DOTALL);
 	
+
 
 	public ArrayList<String> breakRows(String table) {
 
@@ -378,7 +395,6 @@ public class WikiTextParser {
 		return rows;
 
 	}
-
 	public int countRows(String table) {
 
 		ArrayList<String> rows = new ArrayList<String>();
@@ -395,6 +411,7 @@ public class WikiTextParser {
 
 	public int countColumns(String headerRow) throws HeaderException {
 
+		//headerRow = regexparser.regexAttributeClass(headerRow);
 		ArrayList<String> headerCells = new ArrayList<String>();
 		boolean var = false;
 		Matcher regexMatcher = classCleanupPattern.matcher(headerRow);
@@ -425,6 +442,7 @@ public class WikiTextParser {
 		 */
 		else {
 			throw new HeaderException("Misuse of header's wiki markup language ");
+			
 		}
 
 		int columnCount = 0;
@@ -446,6 +464,7 @@ public class WikiTextParser {
 		return columnCount;
 	}
 
+
 	/**
 	 * this methods for counting how many columns if we have a table without
 	 * headers which is very rare
@@ -456,6 +475,7 @@ public class WikiTextParser {
 	 */
 	public int countColumnsNormalRow(String normalRow) throws RowException {
 
+		normalRow = regexparser.regexAttributeClass(normalRow);
 		ArrayList<String> rowCells = new ArrayList<String>();
 
 		// Matcher regexMatcher = classCleanupPattern.matcher(normalRow);
@@ -488,6 +508,7 @@ public class WikiTextParser {
 		return columnCount;
 	}
 
+
 	/**
 	 * Creates the structure of table as an array of array
 	 * 
@@ -515,17 +536,20 @@ public class WikiTextParser {
 				} catch (HeaderException e) {
 					// TODO Auto-generated catch block
 					System.out.println("Misuse of header wiki markup language");
+					hasMisuseException=true;
 				}
 				break;
 			}
 
 			else if (translateNormalRow1(varrow)) {
+				hasNoHeader = true;
 				headerRow = varrow;
 				try {
 					column = countColumnsNormalRow(headerRow);
 				} catch (RowException e) {
 
 					System.out.println("Misuse of row's wiki markup language");
+					hasMisuseException=true;
 				}
 				break;
 			}
@@ -535,11 +559,13 @@ public class WikiTextParser {
 			else if (translateHeaderRow3(rowWithoutDelimiter(varrow)) && (!varrow.contains("|+"))
 					&& (!regexMatcher.find())) {
 				String var = rowWithoutDelimiter(varrow);
+				hasNoHeader = true;
 				headerRow = varrow;
 				try {
 					column = countColumnsNormalRow(headerRow);
 				} catch (RowException e) {
 					System.out.println("Misuse of row's wiki markup language");
+					hasMisuseException=true;
 
 				}
 				break;
@@ -550,12 +576,14 @@ public class WikiTextParser {
 				 * System.out.println("Misuse of row's wiki markup language"); }
 				 */
 			else if (translateNormalRow2(varrow) && (!varrow.contains("|+"))) {
+				hasNoHeader = true;
 				headerRow = varrow;
 				try {
 					column = countColumnsNormalRow(headerRow);
 				} catch (RowException e) {
 					// TODO Auto-generated catch block
 					System.out.println("Misuse of row's wiki markup language");
+					hasMisuseException=true;
 				}
 
 				break;
@@ -563,10 +591,8 @@ public class WikiTextParser {
 		}
 
 		Cell[][] matrix = new Cell[row][column];
-
 		return matrix;
 	}
-
 	/**
 	 * check if cells in this normal row are separated by "||"
 	 * 
@@ -688,12 +714,12 @@ public class WikiTextParser {
 			case "||":
 				if (bracketCount == 0) {
 					try {
-						String cell = row.substring(startRow, startPos - 1);// startPos-1
+						String cell = row.substring(startRow, startPos);// startPos-1
 						cells.add(cell);
 						startRow = startPos + 1;
 					} catch (IndexOutOfBoundsException e) {
 						System.out.println("Cell separated by \"||\" is not well structured in table n : "+ numTable);
-						hasException=true;
+						hasMisuseException=true;
 						
 					}
 					
@@ -743,6 +769,7 @@ public class WikiTextParser {
 		return cells;
 	}
 
+
 	/**
 	 * the good one: Method that splits the row into cells and check if there is
 	 * nested tables. the cells here are separated by "| " we didn't parse each
@@ -773,7 +800,7 @@ public class WikiTextParser {
 				catch(IndexOutOfBoundsException e)
 				{
 					System.out.println("Cell separated by \"|\" is not well structured in table n : "+ numTable);
-					hasException=true;
+					hasMisuseException=true;
 				}
 				}
 				startPos++;
@@ -806,6 +833,7 @@ public class WikiTextParser {
 		}
 		return cells;
 	}
+
 
 	/**
 	 * checks if this row is a header
@@ -902,7 +930,6 @@ public class WikiTextParser {
 		else
 			return false;
 	}
-
 	public boolean translateHeaderRow3(String header) {
 
 		int startPos = 2;
@@ -986,7 +1013,6 @@ public class WikiTextParser {
 			return false;
 
 	}
-
 	/**
 	 * useful for the case where we have in one single row a header and a row,
 	 * we delete this "|-" delimiter because we want to separate cell using
@@ -1177,8 +1203,74 @@ public class WikiTextParser {
 		}
 		return headers;
 	}
-
+	
 	public Cell[][] parseTable(String table) {
+
+		// create the matrix
+		Cell[][] matrix = createMatrix(table);
+		
+		ArrayList<String> rows = new ArrayList<String>();
+		
+		table = regexparser.regexAttributeStyle(table);
+		table = regexparser.regexAttributeAlign(table);
+		table = regexparser.regexAttributeAlignWitoutQuotes(table);
+		table = regexparser.regexAttributeValign(table);
+		table = regexparser.regexAttributeWidth(table);
+		table = regexparser.regexAttributeWidthWithoutQuotes(table);
+		table = regexparser.regexAttributeScope(table);
+		table = regexparser.regexAttributeSpan(table);
+		table = regexparser.regexRef(table);
+		table = regexparser.regexAttributeBgcolor(table);
+		table = regexparser.regexAttributeClass(table);
+		
+		Pattern tooMuchSpace = Pattern.compile("\\s+\n");
+    	Matcher matcher = tooMuchSpace.matcher(table);
+    	while (matcher.find()) {
+			table=matcher.replaceAll("\n");
+		}
+		rows = breakRows(table);
+
+		int i = 0;
+		for (String row : rows) {
+			if (translateHeaderRow(row)) {
+				matrix = parseHeader(row, i, matrix);
+			}
+			if ((row.startsWith("\n|")) || (row.startsWith(" \n|")) || (row.startsWith("  \n|"))) {
+
+				matrix = parseNormalRow(row, i, matrix);
+			}
+
+			i++;
+			if (!translateHeaderRow(row) && i == 0) {
+				i = 0;
+			}
+		}
+		Table tableObject = new Table(hasOnlyRowspan,hasOnlyColspan,hasMixRowspanAndColspan,hasNestedTable,hasException,hasNoHeader
+				,hasCaption,hasMisuseException);
+		tableswikipedia.add(tableObject);
+		hasOnlyRowspan=false;
+		hasOnlyColspan=false;
+		hasMixRowspanAndColspan=false;
+		hasNestedTable=false;
+		hasException = false;
+		hasNoHeader = false;
+		hasCaption = false;
+		hasMisuseException=false;
+
+		// Fill every empty object cell with an empty object cell
+		Cell emptyCell = new Cell("emptyCell","null");
+		for (int m = 0; m < matrix.length; m++) {
+			for (int n= 0; n < matrix[0].length; n++) {
+			if(matrix[m][n] == null){
+				matrix[m][n]=emptyCell;
+			}
+			}}
+		
+		return matrix;
+		
+	}
+
+	/*public Cell[][] parseTable(String table) {
 
 		// create the matrix
 		Cell[][] matrix = createMatrix(table);
@@ -1186,12 +1278,15 @@ public class WikiTextParser {
 		ArrayList<String> rows = new ArrayList<String>();
 		table = regexparser.regexAttributeStyle(table);
 		table = regexparser.regexAttributeAlign(table);
+		//table = regexparser.regexAttributeAlignWitoutQuotes(table);
 		table = regexparser.regexAttributeValign(table);
 		table = regexparser.regexAttributeWidth(table);
+		//table = regexparser.regexAttributeWidthWithoutQuotes(table);
 		table = regexparser.regexAttributeScope(table);
 		table = regexparser.regexAttributeSpan(table);
 		table = regexparser.regexRef(table);
 		table = regexparser.regexAttributeBgcolor(table);
+		table = regexparser.regexAttributeClass(table);
 		rows = breakRows(table);
 
 		int i = 0;
@@ -1219,6 +1314,13 @@ public class WikiTextParser {
 
 		return matrix;
 		
+	}*/
+	
+	public ArrayList<String> getHeaders(String table)
+	{    
+		
+		
+		return null;
 	}
 
 	
@@ -1252,40 +1354,96 @@ public class WikiTextParser {
 	
 		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
 		Cell[][] matrix = null;
-		
 		ArrayList<String> tables = varTable.createTable(wikiText);
 		for (String table : tables) {
+			if (table.contains("\n|+"))
+			{
+				hasCaption=true;
+			}
+			if(table.contains("rowspan") && (!table.contains("colspan")))
+			{
+				hasOnlyRowspan = true;
+			}
+			else if (!table.contains("rowspan") && (table.contains("colspan")))
+			{
+				hasOnlyColspan= true;
+			}
+			else if (table.contains("rowspan") && (table.contains("colspan")))
+			{
+				hasMixRowspanAndColspan = true;
+			}
 			matrix = parseTable(table);
-			numTable++;
 			
+			System.out.println(" Table "+numTable+ " has: "+ countRows(table)+ " rows");
+			System.out.println(" Table "+numTable+ " has: "+ matrix[0].length+ " columns");
+			System.out.println(" Table "+numTable+" has: "+ numberCellOnlyColspan+ " colspan cells");
+			System.out.println(" Table "+numTable+" has: "+ numberCellOnlyRowspan+ " rowspan cells");
+			System.out.println(" Table "+numTable+" has: "+ numberCellColspanAndRowspan+ " rowspan and colspan cells");
+			System.out.println(" Table "+numTable+" has: "+ numberNestedTables+ " nested table inside a cell");
+			
+			System.out.println("\n");
+		
+			//System.out.println(" Number of tables that have only rowspan attribute: "+  numberTableOnlyRowspan);
+			//System.out.println(" Number of tables that have only colspan attribute: " + numberTableOnlyColspan);
+			//System.out.println(" Number of tables that have colspan and rowspan attribute: " + numberTableColspanAndRowspan);
+			//System.out.println("\n");
+			System.out.println("*******");
+			
+			
+			numTable++;
 			matrixTables.add(matrix);
+			numberCellOnlyColspan=0;
+			numberCellOnlyRowspan =0;
+			numberCellColspanAndRowspan =0;
+			numberNestedTables = 0;
+			
 		}
-
 		return matrixTables;
 	}
 
-	public Cell[][] parseNormalRow(String row, int i, Cell[][] matrix) {
+	public Cell[][] parseNormalRow(String row, int i, Cell[][] table) {
 
 		ArrayList<String> rowcells = new ArrayList<String>();
-		String type = "NormalCell";
-		if (translateNormalRow2(row)) {
+		
+		
+		 if ((translateNormalRow1(row))) {
+			String type = "NormalCell";
+			rowcells = translateCell1(row);
+			for (String cell : rowcells) {
+
+				cell = cell.trim();
+				table = parseCell(cell, i, table, type);
+			}
+		}
+		// there is two types of cells: cells separated by "||" and cells separated by "\n|"
+		//  our first if condition should check if cells are separated by "||" then we can test if 
+		// is separated by "\n|" to avoid bugs
+			
+		 else if (translateNormalRow2((row))) {
 			rowcells = translateCell2(row);
+			for (String cell : rowcells) {
+				String type = "NormalCell";
+				cell = cell.trim();
+				table = parseCell(cell, i, table, type);
+			}
 		}
 
-		if ((translateNormalRow1(row))) {
-			rowcells = translateCell1(row);
+	
+		
+		else{
+			for(int j=0;j<table[0].length;j++)
+			{
+				Cell cell1 = new Cell("no header", "null");
+				table[i][j] = cell1;
+			}
 		}
 
 		// for each header cell parse the cell
 
-		for (String cell : rowcells) {
-
-			cell = cell.trim();
-			matrix = parseCell(cell, i, matrix, type);
-		}
-		return matrix;
+	
+		return table;
 	}
-
+	
 	public Cell[][] parseHeader(String row, int i, Cell[][] matrix) {
 
 		ArrayList<String> headers = new ArrayList<String>();
@@ -1339,7 +1497,6 @@ public class WikiTextParser {
 		Cell[][] cellTable;
 		ArrayList<String> var = varTable.createTable(cell);
 		
-
 		if (var.isEmpty()) {
 			// cell = pipePattern.matcher(cell).replaceAll("");
 			if ((cell.contains("colspan")) && (!cell.contains("rowspan"))) {
@@ -1348,7 +1505,8 @@ public class WikiTextParser {
 				int countercolumn = regexparser.extractColspanDigit(cell);
 				// fill table
 				matrix = fillHorizontal(cell, countercolumn, matrix, i, type);
-				hasColspan = true;
+				//hasColspan = true;
+				numberCellOnlyColspan++;
 
 			} else if ((cell.contains("rowspan")) && (!cell.contains("colspan"))) {
 
@@ -1357,7 +1515,8 @@ public class WikiTextParser {
 				int counterrow = regexparser.extractRowspanDigit(cell);
 				// fill table
 				matrix = fillVertical(cell, counterrow, matrix, i, type);
-				hasRowspan = true;
+				numberCellOnlyRowspan++;
+				//hasRowspan = true;
 
 			} else if ((cell.contains("rowspan")) && (cell.contains("colspan"))) {
 
@@ -1368,6 +1527,7 @@ public class WikiTextParser {
 				int counterRow = regexparser.extractRowspanDigit(cell);
 				
 				matrix = fillHorizontalVertical(cell, countercolumn, counterRow, matrix, i, type);
+				numberCellColspanAndRowspan++;
 				hasMixRowspanAndColspan= true;
 			} else {
 				matrix = fillVertical(cell, 1, matrix, i, type);
@@ -1378,6 +1538,7 @@ public class WikiTextParser {
 			String cellTableString = ConvertArrayToString(cell);
 			type = "nested table";
 			matrix = fillVertical(cellTableString, 1, matrix, i, type);
+			numberNestedTables ++;
 		}
 	
 		return matrix;
@@ -1396,12 +1557,12 @@ public class WikiTextParser {
 
 		cellvalue = colspanCleanupPattern.matcher(cellvalue).replaceAll("");
 		cellvalue = colspanCleanupPattern2.matcher(cellvalue).replaceAll("");
-		cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		//cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
 		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 
 		// cellvalue = .matcher(cellvalue).replaceAll("");
 		int j = 0;
-
+try{
 		while (table[i][j] != null) {
 			try {
 				j++;
@@ -1414,6 +1575,13 @@ public class WikiTextParser {
 			}
 
 		}
+}
+catch(ArrayIndexOutOfBoundsException e)
+{
+	System.out.println("table isn't well structured");
+	hasException = true;
+	
+}
 
 		while (numberContent > 0) {
 			try {
@@ -1447,7 +1615,7 @@ public class WikiTextParser {
 			cellvalue = rowspanCleanupPattern.matcher(cellvalue).replaceAll("");
 			cellvalue = rowspanCleanupPattern2.matcher(cellvalue).replaceAll("");
 		}
-		cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		//cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
 		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 		int j = 0;
 		try {
@@ -1626,6 +1794,19 @@ public class WikiTextParser {
 		return countException;
 	}
 	
+	public int counthasMisuseException()
+	{
+		int countMisuseException =0;
+		for (Table table: tableswikipedia)
+		{
+			if (table.hasMisuseException)
+			{
+				countMisuseException++;
+			}
+		}
+		return countMisuseException;
+	}
+	
 	public int countNestedtables()
 	{
 		int nestedTableCount =0;
@@ -1639,6 +1820,19 @@ public class WikiTextParser {
 		return nestedTableCount;
 	}
 	
+	public int counthasNoHeader()
+	{
+		int noHeaderCount =0;
+		for (Table table: tableswikipedia)
+		{
+			if (table.hasNoHeader)
+			{
+				noHeaderCount++;
+			}
+		}
+		return noHeaderCount;
+	}
+	
 	public int countTable()
 	{
 		ArrayList<String> tables = varTable.createTable(wikiText);
@@ -1647,6 +1841,19 @@ public class WikiTextParser {
 		
 		return countTable;
 		
+	}
+	
+	public int countCaption()
+	{
+		int countCaption =0;
+		for (Table table: tableswikipedia)
+		{
+			if (table.hasCaption)
+			{
+				countCaption++;
+			}
+		}
+		return countCaption;
 	}
 	
 	

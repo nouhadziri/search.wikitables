@@ -49,14 +49,20 @@ public class Wikiparser implements PageCallbackHandler {
 			
 			page.getAllMatrix();
 			System.out.println("\n");
+			
 			System.out.println("***** Statistics about wiki ID: "+page.getID());
+			System.out.println("Title of the article : "+page.getTitle());
 			System.out.println("Number of tables  : "+page.getCountTable());
+			System.out.println("Number of tables having no header : "+ page.getCountHasNoHeader());
+			System.out.println("Number of tables having caption : "+ page.getCountCaption());
 			System.out.println("Number of tables having colspan attribute : "+page.getCountColspan());
 			System.out.println("Number of tables having rowspan attribute : "+page.getCountRowspan());
 			System.out.println("Number of tables having mix rowspan and colspan attribute : "+page.getCountMixRowandColumn());
 			System.out.println("Number of tables having nested tables : "+page.getCountNestedTable());
 			System.out.println("Number of tables having exception : "+page.getCountExceptions());
+			System.out.println("Number of tables having misuse of wikimarkup specification : "+page.getCountMisuseException());
 			
+			System.out.println("***** End Statistics***");
 			
 			
 		

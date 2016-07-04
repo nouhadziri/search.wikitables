@@ -1,5 +1,7 @@
 package ca.ualberta.wikipedia.tablereader;
 
+
+
 public class Table {
 
 	public boolean hasRowspan;
@@ -7,18 +9,37 @@ public class Table {
 	public boolean hasMixRowspanAndColspan;
 	public boolean hasNestedTable;
 	public boolean hasException;
-
+	public boolean hasCaption;
+	
+	public boolean hasNoHeader;
+	public boolean hasMisuseException;
+	
 	public Table(boolean hasRowspan, boolean hasColspan, boolean hasMixRowspanAndColspan, boolean hasNestedTable,
-			boolean hasException) {
+			boolean hasException,boolean hasNoHeader,boolean hasCaption,boolean hasMisuseException) {
 		super();
 		this.hasRowspan = hasRowspan;
 		this.hasColspan = hasColspan;
 		this.hasMixRowspanAndColspan = hasMixRowspanAndColspan;
 		this.hasNestedTable = hasNestedTable;
 		this.hasException = hasException;
-	}
+		this.hasNoHeader = hasNoHeader;
+		this.hasCaption = hasCaption;
+		this.hasMisuseException=hasMisuseException;
+ 	}
 
 	
+
+	public boolean isHasNoHeader() {
+		return hasNoHeader;
+	}
+
+
+
+	public void setHasNoHeader(boolean hasNoHeader) {
+		this.hasNoHeader = hasNoHeader;
+	}
+
+
 
 	public boolean isHasRowspan() {
 		return hasRowspan;

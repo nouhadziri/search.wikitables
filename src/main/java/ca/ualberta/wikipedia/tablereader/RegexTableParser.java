@@ -11,24 +11,38 @@ public class RegexTableParser {
 	// private static Pattern styleCleanupPattern =
 	// Pattern.compile("\\bstyle\\s*=\\s*\"(.*?)\"", Pattern.MULTILINE |
 	// Pattern.DOTALL);
-
 	private static Pattern alignCleanupPattern = Pattern.compile("\\balign\\s*=\\s*\"(.*?)\"(.*?)\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
-	private static Pattern alignCleanupPattern2 = Pattern.compile("\\balign\\s*=\\s*(.*?)\\|?",
+	private static Pattern alignCleanupPatternWithNoQuotes = Pattern.compile("\\balign\\s*=\\s*\\S{6}\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern styleCleanupPattern = Pattern.compile("\\b\\s?style\\s*=\\s*\"(.*?)\"(.*?)\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern styleCleanupPatternWithNoQuotes = Pattern.compile("\\bstyle\\s*=\\s*\\S*\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern widthCleanupPattern = Pattern.compile("\\bwidth\\s*=\\s*\"(.*?)\"\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	
+	private static Pattern widthCleanupPatternWithNoQuotes = Pattern.compile("\\bwidth\\s*=\\s*\\S*\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern bgcolorCleanupPattern = Pattern.compile("\\bbgcolor\\s*=\\s*\"(.*?)\"\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern bgcolorCleanupPatternWithNoQuotes = Pattern.compile("\\bgcolor\\s*=\\s*\\S*\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern scopeCleanupPattern = Pattern.compile("\\bscope\\s*=\\s*\"(.*?)\"\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
+	
+	private static Pattern scopeCleanupPatternWithNoQuotes= Pattern.compile("\\bscope\\s*=\\s*\\S*\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern valignCleanupPattern = Pattern.compile("\\bvalign\\s*=\\s*\"(.*?)\"\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern valignCleanupPatternWithNoQuotes = Pattern.compile("\\bvalign\\s*=\\s*\\S*\\|?",
 			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern refCleanupPattern = Pattern.compile("<ref(.*?)>.*?</ref>",
 			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern spanCleanupPattern = Pattern.compile("<span(.*?)>", Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern classCleanupPattern = Pattern.compile("\\bclass\\s*=\\s*\"(.*?)\"",
+			Pattern.MULTILINE | Pattern.DOTALL);
+
 
 	/**
 	 * Method that extracts colspan = "?" to have the digit afterwards. It does
@@ -133,6 +147,36 @@ public class RegexTableParser {
 		return table;
 
 	}
+	public String regexAttributeStyleWitoutQuotes(String table) {
+
+		Matcher regexMatcher = styleCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			} /*
+				 * else System.out.println("not found !"); }
+				 */
+		}
+		return table;
+
+	}
+	public String regexAttributeClass(String table) {
+
+		Matcher regexMatcher = classCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			} /*
+				 * else System.out.println("not found !"); }
+				 */
+		}
+		return table;
+
+	}
 
 	public String regexAttributeAlign(String table) {
 
@@ -150,6 +194,91 @@ public class RegexTableParser {
 		return table;
 
 	}
+	
+	public String regexAttributeAlignWitoutQuotes(String table) {
+
+		Matcher regexMatcher = alignCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+	public String regexAttributeBgcolorWitoutQuotes(String table) {
+
+		Matcher regexMatcher = bgcolorCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+	
+	public String regexAttributeValignWithoutQuotes(String table) {
+
+		Matcher regexMatcher = valignCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+	
+	public String regexAttributeWidthWithoutQuotes(String table) {
+
+		Matcher regexMatcher = widthCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+
+	public String regexAttributeScopeWithoutQuotes(String table) {
+
+		Matcher regexMatcher = scopeCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
+
+		return table;
+
+	}
+	
 
 	public String regexAttributeBgcolor(String table) {
 

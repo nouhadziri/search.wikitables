@@ -234,4 +234,19 @@ public int getCountExceptions()
 	return wikiTextParser.counthasException();
 }
 
+public int getCountMisuseException()
+{
+	return wikiTextParser.counthasMisuseException();
+}
+
+public int getCountHasNoHeader()
+{
+	return wikiTextParser.counthasNoHeader();
+}
+
+public int getCountCaption()
+{
+	return wikiTextParser.countCaption();
+}
+
 }

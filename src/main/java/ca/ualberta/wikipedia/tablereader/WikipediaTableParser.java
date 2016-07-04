@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+
 public class WikipediaTableParser {
 	
 	//private String wikiText = null;
@@ -889,6 +891,13 @@ public class WikipediaTableParser {
 		}
 		return headers;
 	}
+	
+	public boolean hasOnlyRowspan;
+	public boolean hasOnlyColspan;
+
+	public boolean hasNoHeader;
+	public boolean hasCaption;
+	public boolean hasMisuseException;
 
 	public Cell[][] parseTable(String table) {
 
@@ -921,7 +930,8 @@ public class WikipediaTableParser {
 				i = 0;
 			}
 		}
-		Table tableObject = new Table(hasRowspan,hasColspan,hasMixRowspanAndColspan,hasNestedTable,hasException);
+		Table tableObject = new Table(hasOnlyRowspan,hasOnlyColspan,hasMixRowspanAndColspan,hasNestedTable,hasException,hasNoHeader
+				,hasCaption,hasMisuseException);
 		tableswikipedia.add(tableObject);
 		hasRowspan=false;
 		hasColspan=false;
