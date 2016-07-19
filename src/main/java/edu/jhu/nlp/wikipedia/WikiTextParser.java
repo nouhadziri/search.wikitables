@@ -291,8 +291,11 @@ public class WikiTextParser {
 		}
 		return null;
 	}
+	
+	
 	/**
 	 * 
+	 * Extracting &
 	 * Parsing Tables
 	 * 
 	 * 
@@ -464,7 +467,6 @@ public class WikiTextParser {
 		return columnCount;
 	}
 
-
 	/**
 	 * this methods for counting how many columns if we have a table without
 	 * headers which is very rare
@@ -514,8 +516,28 @@ public class WikiTextParser {
 	 * 
 	 * @param table
 	 */
+	
 	public Cell[][] createMatrix(String table) {
 
+		table = regexparser.regexAttributeStyle(table);
+		table = regexparser.regexAttributeAlign(table);
+		table = regexparser.regexAttributeAlignWitoutQuotes(table);
+		table = regexparser.regexAttributeValign(table);
+		table = regexparser.regexAttributeWidth(table);
+		table = regexparser.regexAttributeWidthWithoutQuotes(table);
+		table = regexparser.regexAttributeScope(table);
+		table = regexparser.regexAttributeSpan(table);
+		//table = regexparser.regexRef(table);
+		table = regexparser.regexAttributeBgcolor(table);
+		table = regexparser.regexAttributeClass(table);
+		table =  regexparser.regexAttributeClassWithNoquotes(table);
+		
+		Pattern tooMuchSpace = Pattern.compile("\\s+\n");
+    	Matcher matcher = tooMuchSpace.matcher(table);
+    	while (matcher.find()) {
+			table=matcher.replaceAll("\n");
+		}
+		
 		ArrayList<String> rows = new ArrayList<String>();
 		int row = countRows(table);
 		rows = breakRows(table);
@@ -591,8 +613,12 @@ public class WikiTextParser {
 		}
 
 		Cell[][] matrix = new Cell[row][column];
+		
+		
+
 		return matrix;
 	}
+
 	/**
 	 * check if cells in this normal row are separated by "||"
 	 * 
@@ -1219,9 +1245,10 @@ public class WikiTextParser {
 		table = regexparser.regexAttributeWidthWithoutQuotes(table);
 		table = regexparser.regexAttributeScope(table);
 		table = regexparser.regexAttributeSpan(table);
-		table = regexparser.regexRef(table);
+		//table = regexparser.regexRef(table);
 		table = regexparser.regexAttributeBgcolor(table);
 		table = regexparser.regexAttributeClass(table);
+		table =  regexparser.regexAttributeClassWithNoquotes(table);
 		
 		Pattern tooMuchSpace = Pattern.compile("\\s+\n");
     	Matcher matcher = tooMuchSpace.matcher(table);
@@ -1270,51 +1297,6 @@ public class WikiTextParser {
 		
 	}
 
-	/*public Cell[][] parseTable(String table) {
-
-		// create the matrix
-		Cell[][] matrix = createMatrix(table);
-
-		ArrayList<String> rows = new ArrayList<String>();
-		table = regexparser.regexAttributeStyle(table);
-		table = regexparser.regexAttributeAlign(table);
-		//table = regexparser.regexAttributeAlignWitoutQuotes(table);
-		table = regexparser.regexAttributeValign(table);
-		table = regexparser.regexAttributeWidth(table);
-		//table = regexparser.regexAttributeWidthWithoutQuotes(table);
-		table = regexparser.regexAttributeScope(table);
-		table = regexparser.regexAttributeSpan(table);
-		table = regexparser.regexRef(table);
-		table = regexparser.regexAttributeBgcolor(table);
-		table = regexparser.regexAttributeClass(table);
-		rows = breakRows(table);
-
-		int i = 0;
-		for (String row : rows) {
-			if (translateHeaderRow(row)) {
-				matrix = parseHeader(row, i, matrix);
-			}
-			if ((row.startsWith("\n|")) || (row.startsWith(" \n|")) || (row.startsWith("  \n|"))) {
-
-				matrix = parseNormalRow(row, i, matrix);
-			}
-
-			i++;
-			if (!translateHeaderRow(row) && i == 0) {
-				i = 0;
-			}
-		}
-		Table tableObject = new Table(hasRowspan,hasColspan,hasMixRowspanAndColspan,hasNestedTable,hasException);
-		tableswikipedia.add(tableObject);
-		hasRowspan=false;
-		hasColspan=false;
-		hasMixRowspanAndColspan=false;
-		hasNestedTable=false;
-		hasException = false;
-
-		return matrix;
-		
-	}*/
 	
 	public ArrayList<String> getHeaders(String table)
 	{    
@@ -1333,7 +1315,7 @@ public class WikiTextParser {
 			for (int i = 0; i < wikimatrix.length; i++) {
 				for (int j = 0; j < wikimatrix[0].length; j++) {
 					try {
-						if (wikimatrix[i][j].getContent() == null) {
+						if (wikimatrix[i][j].getContent() == "null") {
 							continue;
 						}
 						System.out.print(wikimatrix[i][j].getContent() + " ");
@@ -1400,25 +1382,65 @@ public class WikiTextParser {
 		}
 		return matrixTables;
 	}
+	
+	/**
+	 * returns header row index
+	 * @param table
+	 * @return
+	 */
+	public String getHeaderRow(String table)
+	{
+		ArrayList<String> rows = new ArrayList<String>();
+	    String header = null;
+		rows = breakRows(table);
 
+		
+		for (String row : rows) {
+			if (translateHeaderRow(row)) {
+				header = row;
+				break;
+			}
+	}	
+		return header;
+	}
+	
 	public Cell[][] parseNormalRow(String row, int i, Cell[][] table) {
 
 		ArrayList<String> rowcells = new ArrayList<String>();
-		
+		ArrayList<String> rowcells1 = new ArrayList<String>();
+		String[] rowscells2=null;
 		
 		 if ((translateNormalRow1(row))) {
 			String type = "NormalCell";
 			rowcells = translateCell1(row);
 			for (String cell : rowcells) {
 
-				cell = cell.trim();
-				table = parseCell(cell, i, table, type);
+				if (cell.contains("\n|"))
+				{
+					rowscells2= cell.split("\n\\|");
+					for(int k=0;k<rowscells2.length;k++)
+					{
+						rowcells1.add(rowscells2[k]);
+					}
+				}
+				else {
+					rowcells1.add(cell);
+				}
+				
 			}
+			rowcells=rowcells1;
+			for(String cell: rowcells)
+			{
+			cell = cell.trim();
+			table = parseCell(cell, i, table, type);
+			}
+			
 		}
 		// there is two types of cells: cells separated by "||" and cells separated by "\n|"
 		//  our first if condition should check if cells are separated by "||" then we can test if 
-		// is separated by "\n|" to avoid bugs
-			
+		// is separated by "\n|" to avoid bugs because our row ends by \n|-
+        // and this causes us problems if we split by \n|
+		 
 		 else if (translateNormalRow2((row))) {
 			rowcells = translateCell2(row);
 			for (String cell : rowcells) {
@@ -1447,6 +1469,8 @@ public class WikiTextParser {
 	public Cell[][] parseHeader(String row, int i, Cell[][] matrix) {
 
 		ArrayList<String> headers = new ArrayList<String>();
+		ArrayList<String> headers2 = new ArrayList<String>();
+		String[] headers3 = null;
 		boolean header = false;
 
 		Matcher regexMatcher = classCleanupPattern.matcher(row);
@@ -1464,6 +1488,21 @@ public class WikiTextParser {
 			headers = translateHeaderCell3(row);
 		} else {
 			headers = translateCell2(row);
+			for(String headerCell: headers)
+			{
+				if (!headerCell.contains("||"))
+				{
+					headers2.add(headerCell);
+				}
+				else {
+					headers3 = headerCell.split("\\|\\|");
+					for (int k =0;k<headers3.length;k++)
+					{
+						headers2.add(headers3[k]);
+					}
+				}
+			}
+			headers = headers2;
 			header = true;
 			// this will work only if we have ! header than normal row separated
 			// by |

@@ -2,13 +2,14 @@ package edu.jhu.nlp.wikipedia;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set;
+
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ca.ualberta.wikipedia.rdf.GenerateRdf;
 import ca.ualberta.wikipedia.tablereader.Cell;
-import ca.ualberta.wikipedia.tablereader.WikipediaTableParser;
+
 
 
 /**
@@ -18,6 +19,7 @@ import ca.ualberta.wikipedia.tablereader.WikipediaTableParser;
  */
 public class WikiPage {
 
+	public GenerateRdf rdf = new GenerateRdf();
     private String title = null;
     private WikiTextParser wikiTextParser = null;
     private String id = null;
@@ -176,6 +178,7 @@ public class WikiPage {
     
     /**
      * Parsing tables
+     * printing out tables
      */
     
     public void getAllMatrix()
@@ -183,7 +186,7 @@ public class WikiPage {
     	ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
 
 		matrixTables = wikiTextParser.getAllMatrixFromTables();
-
+		
 		for (Cell[][] wikimatrix : matrixTables) {
 			for (int i = 0; i < wikimatrix.length; i++) {
 				for (int j = 0; j < wikimatrix[0].length; j++) {
@@ -202,6 +205,54 @@ public class WikiPage {
 			}
 		}
 
+    }
+    
+    public void getRDFTriples()
+    {
+    	ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
+
+		matrixTables = wikiTextParser.getAllMatrixFromTables();
+		
+		for (Cell[][] matrix : matrixTables) {
+			//System.out.println("\n***Matrix with blank node***\n");
+			
+			System.out.println("This table contain a cast : "+rdf.checkCastMatrix(matrix));
+			// The method produceRDF() contains predicateEntityColumn() so
+			// we don't have to call it here
+			//matrix = rdf.predicteEntityColumn(matrix);
+			System.out.println("\n***Data type***\n");
+			
+			// rdf.annotateColumns(matrix);
+
+			rdf.cleanUpMatrix(matrix);
+			//System.out.println("Index Xx Xx is: " +rdf.getIndexWordShape(matrix,"Xx"));
+			System.out.println("\n***Word Shape & Data type***\n");
+			/*
+			 * for (String name : rdf.buildHistogram(matrix, 0).keySet()) {
+			 * 
+			 * String key = name.toString(); String value =
+			 * rdf.buildHistogram(matrix, 0).get(name).toString();
+			 * System.out.println(key + " " + value);
+			 * 
+			 * }
+			 */
+			for (int j = 0; j < matrix[0].length; j++) {
+
+				System.out.println("Data Type of column " + j + " : " + rdf.predicteColumnDataType(matrix, j));
+				System.out.println("Word Shape of column " + j + " : " + rdf.predicteColumnShape1(matrix, j));
+			}
+
+		}
+		System.out.println("\n ***Table structure*** \n");
+
+		rdf.printOutMatrix(matrixTables);
+
+		System.out.println("\n ***RDF Triples*** \n");
+		rdf.printOutRDFTriple(matrixTables);
+		
+		
+		System.out.println("\n***RDF triples for blank node***\n");
+		rdf.printOutRDFTripleBlankNode(matrixTables);
     }
     
 public int getCountColspan()

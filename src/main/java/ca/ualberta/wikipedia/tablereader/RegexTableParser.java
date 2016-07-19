@@ -43,7 +43,9 @@ public class RegexTableParser {
 	private static Pattern classCleanupPattern = Pattern.compile("\\bclass\\s*=\\s*\"(.*?)\"",
 			Pattern.MULTILINE | Pattern.DOTALL);
 
-
+	
+	private static Pattern ClassCleanupPatternWithNoQuotes = Pattern.compile("\\bclass\\s*=\\s*\\S*\\|?",
+			Pattern.MULTILINE | Pattern.DOTALL);
 	/**
 	 * Method that extracts colspan = "?" to have the digit afterwards. It does
 	 * not handle colspan =10 without quotes. should mention that to Matteo
@@ -131,6 +133,22 @@ public class RegexTableParser {
 		}
 		return builder.toString();
 	}
+	
+	public String regexAttributeClassWithNoquotes(String table) {
+
+		Matcher regexMatcher = ClassCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			} /*
+				 * else System.out.println("not found !"); }
+				 */
+		}
+		return table;
+
+	}
 
 	public String regexAttributeStyle(String table) {
 
@@ -147,6 +165,7 @@ public class RegexTableParser {
 		return table;
 
 	}
+	
 	public String regexAttributeStyleWitoutQuotes(String table) {
 
 		Matcher regexMatcher = styleCleanupPatternWithNoQuotes.matcher(table);
@@ -194,7 +213,6 @@ public class RegexTableParser {
 		return table;
 
 	}
-	
 	public String regexAttributeAlignWitoutQuotes(String table) {
 
 		Matcher regexMatcher = alignCleanupPatternWithNoQuotes.matcher(table);
@@ -211,6 +229,7 @@ public class RegexTableParser {
 		return table;
 
 	}
+
 	public String regexAttributeBgcolorWitoutQuotes(String table) {
 
 		Matcher regexMatcher = bgcolorCleanupPatternWithNoQuotes.matcher(table);
@@ -227,10 +246,58 @@ public class RegexTableParser {
 		return table;
 
 	}
-	
+	public String regexAttributeBgcolor(String table) {
+
+		Matcher regexMatcher = bgcolorCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+	public String regexAttributeValign(String table) {
+
+		Matcher regexMatcher = valignCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
 	public String regexAttributeValignWithoutQuotes(String table) {
 
 		Matcher regexMatcher = valignCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+			/*
+			 * else System.out.println("not found !"); }
+			 */}
+
+		return table;
+
+	}
+
+	public String regexAttributeWidth(String table) {
+
+		Matcher regexMatcher = widthCleanupPattern.matcher(table);
 
 		while (regexMatcher.find()) {
 			if (regexMatcher.group().length() != 0) {
@@ -279,58 +346,6 @@ public class RegexTableParser {
 
 	}
 	
-
-	public String regexAttributeBgcolor(String table) {
-
-		Matcher regexMatcher = bgcolorCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			}
-			/*
-			 * else System.out.println("not found !"); }
-			 */}
-
-		return table;
-
-	}
-
-	public String regexAttributeValign(String table) {
-
-		Matcher regexMatcher = valignCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			}
-			/*
-			 * else System.out.println("not found !"); }
-			 */}
-
-		return table;
-
-	}
-
-	public String regexAttributeWidth(String table) {
-
-		Matcher regexMatcher = widthCleanupPattern.matcher(table);
-
-		while (regexMatcher.find()) {
-			if (regexMatcher.group().length() != 0) {
-				table = regexMatcher.replaceAll("");
-
-			}
-			/*
-			 * else System.out.println("not found !"); }
-			 */}
-
-		return table;
-
-	}
-
 	public String regexAttributeScope(String table) {
 
 		Matcher regexMatcher = scopeCleanupPattern.matcher(table);
@@ -405,5 +420,7 @@ public class RegexTableParser {
 		return counterrow;
 
 	}
+
+
 
 }

@@ -64,6 +64,8 @@ public class Wikiparser implements PageCallbackHandler {
 			
 			System.out.println("***** End Statistics***");
 			
+			page.getRDFTriples();
+			
 			
 		
 			
