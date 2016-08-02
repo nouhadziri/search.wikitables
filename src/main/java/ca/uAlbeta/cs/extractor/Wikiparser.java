@@ -47,7 +47,7 @@ public class Wikiparser implements PageCallbackHandler {
 		//	HashSet<String> tables=page.getWikiTable();
 		
 			
-			page.getAllMatrix();
+			//page.getAllMatrix();
 			System.out.println("\n");
 			
 			System.out.println("***** Statistics about wiki ID: "+page.getID());
@@ -92,7 +92,7 @@ public class Wikiparser implements PageCallbackHandler {
 		Wikiparser indexer = new Wikiparser();
 		try {
 			//indexer.indexWikipedia(args[0]);
-			indexer.indexWikipedia("/Users/Nouha/Desktop/test.xml");
+			indexer.indexWikipedia("/Users/nouhadziri/Desktop/test-2.xml");
 			//indexer.indexWikipedia("/Users/Nouha/Desktop/infobox.xml");
 		} catch (Exception e) {
 			

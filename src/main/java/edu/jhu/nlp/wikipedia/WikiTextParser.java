@@ -3,6 +3,8 @@ package edu.jhu.nlp.wikipedia;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -302,7 +304,7 @@ public class WikiTextParser {
 	 */
 	
 	ArrayList<String> headerAndRow = new ArrayList<String>();
-
+	ArrayList<Cell[][]> nonWellformedMatrixTables = new ArrayList<Cell[][]>();
 	RegexTableParser regexparser = new RegexTableParser();
 
 	CreateTables varTable = new CreateTables();
@@ -1230,30 +1232,34 @@ public class WikiTextParser {
 		return headers;
 	}
 	
+	Map<Cell[][], Table> hm = new LinkedHashMap<Cell[][], Table>();
+	
 	public Cell[][] parseTable(String table) {
 
 		// create the matrix
+		table = commentsCleanupPattern.matcher(table).replaceAll("");
 		Cell[][] matrix = createMatrix(table);
-		
+
 		ArrayList<String> rows = new ArrayList<String>();
-		
+
 		table = regexparser.regexAttributeStyle(table);
 		table = regexparser.regexAttributeAlign(table);
 		table = regexparser.regexAttributeAlignWitoutQuotes(table);
 		table = regexparser.regexAttributeValign(table);
+		// table = regexparser.regexAttributeValignWithoutQuotes1(table);
 		table = regexparser.regexAttributeWidth(table);
 		table = regexparser.regexAttributeWidthWithoutQuotes(table);
 		table = regexparser.regexAttributeScope(table);
 		table = regexparser.regexAttributeSpan(table);
-		//table = regexparser.regexRef(table);
+		// table = regexparser.regexRef(table);
 		table = regexparser.regexAttributeBgcolor(table);
 		table = regexparser.regexAttributeClass(table);
-		table =  regexparser.regexAttributeClassWithNoquotes(table);
-		
+		table = regexparser.regexAttributeClassWithNoquotes(table);
+
 		Pattern tooMuchSpace = Pattern.compile("\\s+\n");
-    	Matcher matcher = tooMuchSpace.matcher(table);
-    	while (matcher.find()) {
-			table=matcher.replaceAll("\n");
+		Matcher matcher = tooMuchSpace.matcher(table);
+		while (matcher.find()) {
+			table = matcher.replaceAll("\n");
 		}
 		rows = breakRows(table);
 
@@ -1272,39 +1278,40 @@ public class WikiTextParser {
 				i = 0;
 			}
 		}
-		Table tableObject = new Table(hasOnlyRowspan,hasOnlyColspan,hasMixRowspanAndColspan,hasNestedTable,hasException,hasNoHeader
-				,hasCaption,hasMisuseException);
+		Table tableObject = new Table(hasOnlyRowspan, hasOnlyColspan, hasMixRowspanAndColspan, hasNestedTable,
+				hasException, hasNoHeader, hasCaption, hasMisuseException);
 		tableswikipedia.add(tableObject);
-		hasOnlyRowspan=false;
-		hasOnlyColspan=false;
-		hasMixRowspanAndColspan=false;
-		hasNestedTable=false;
-		hasException = false;
+		hasOnlyRowspan = false;
+		hasOnlyColspan = false;
+		hasMixRowspanAndColspan = false;
+		hasNestedTable = false;
+		// hasException = false;
 		hasNoHeader = false;
 		hasCaption = false;
-		hasMisuseException=false;
+		hasMisuseException = false;
 
 		// Fill every empty object cell with an empty object cell
-		Cell emptyCell = new Cell("emptyCell","null");
+		Cell emptyCell = new Cell("emptyCell", "null");
 		for (int m = 0; m < matrix.length; m++) {
-			for (int n= 0; n < matrix[0].length; n++) {
-			if(matrix[m][n] == null){
-				matrix[m][n]=emptyCell;
+			for (int n = 0; n < matrix[0].length; n++) {
+				if (matrix[m][n] == null) {
+					matrix[m][n] = emptyCell;
+				}
 			}
-			}}
-		
+		}
+
+		hm.put(matrix, tableObject);
+
 		return matrix;
-		
-	}
 
+	}
 	
-	public ArrayList<String> getHeaders(String table)
-	{    
-		
-		
-		return null;
-	}
-
+	/**
+	 * returns all well-formed tables
+	 * non-well formed tables are added in nonWellformedMatrixTables arrayList
+	 * @param wikiText
+	 * @throws HeaderException
+	 */
 	
 	public void printAllMatrixFromTables() {
 		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
@@ -1333,55 +1340,63 @@ public class WikiTextParser {
 
 	public ArrayList<Cell[][]> getAllMatrixFromTables() {
 
-	
-		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
+		ArrayList<Cell[][]> wellformedMatrixTables = new ArrayList<Cell[][]>();
+		
 		Cell[][] matrix = null;
 		ArrayList<String> tables = varTable.createTable(wikiText);
 		for (String table : tables) {
-			if (table.contains("\n|+"))
-			{
-				hasCaption=true;
+			if (table.contains("\n|+")) {
+				hasCaption = true;
 			}
-			if(table.contains("rowspan") && (!table.contains("colspan")))
-			{
+			if (table.contains("rowspan") && (!table.contains("colspan"))) {
 				hasOnlyRowspan = true;
-			}
-			else if (!table.contains("rowspan") && (table.contains("colspan")))
-			{
-				hasOnlyColspan= true;
-			}
-			else if (table.contains("rowspan") && (table.contains("colspan")))
-			{
+			} else if (!table.contains("rowspan") && (table.contains("colspan"))) {
+				hasOnlyColspan = true;
+			} else if (table.contains("rowspan") && (table.contains("colspan"))) {
 				hasMixRowspanAndColspan = true;
 			}
 			matrix = parseTable(table);
 			
-			System.out.println(" Table "+numTable+ " has: "+ countRows(table)+ " rows");
-			System.out.println(" Table "+numTable+ " has: "+ matrix[0].length+ " columns");
-			System.out.println(" Table "+numTable+" has: "+ numberCellOnlyColspan+ " colspan cells");
-			System.out.println(" Table "+numTable+" has: "+ numberCellOnlyRowspan+ " rowspan cells");
-			System.out.println(" Table "+numTable+" has: "+ numberCellColspanAndRowspan+ " rowspan and colspan cells");
-			System.out.println(" Table "+numTable+" has: "+ numberNestedTables+ " nested table inside a cell");
-			
+
+			System.out.println(" Table " + numTable + " has: " + countRows(table) + " rows");
+			System.out.println(" Table " + numTable + " has: " + matrix[0].length + " columns");
+			System.out.println(" Table " + numTable + " has: " + numberCellOnlyColspan + " colspan cells");
+			System.out.println(" Table " + numTable + " has: " + numberCellOnlyRowspan + " rowspan cells");
+			System.out.println(
+					" Table " + numTable + " has: " + numberCellColspanAndRowspan + " rowspan and colspan cells");
+			System.out.println(" Table " + numTable + " has: " + numberNestedTables + " nested table inside a cell");
+			System.out.println("table has Exceptionnnnn " + hasException);
 			System.out.println("\n");
-		
-			//System.out.println(" Number of tables that have only rowspan attribute: "+  numberTableOnlyRowspan);
-			//System.out.println(" Number of tables that have only colspan attribute: " + numberTableOnlyColspan);
-			//System.out.println(" Number of tables that have colspan and rowspan attribute: " + numberTableColspanAndRowspan);
-			//System.out.println("\n");
+
+			// System.out.println(" Number of tables that have only rowspan
+			// attribute: "+ numberTableOnlyRowspan);
+			// System.out.println(" Number of tables that have only colspan
+			// attribute: " + numberTableOnlyColspan);
+			// System.out.println(" Number of tables that have colspan and
+			// rowspan attribute: " + numberTableColspanAndRowspan);
+			// System.out.println("\n");
 			System.out.println("*******");
-			
-			
+
+			// System.out.println("RDF triples:\n");
+			// System.out.println(tripleList);
+
 			numTable++;
-			matrixTables.add(matrix);
-			numberCellOnlyColspan=0;
-			numberCellOnlyRowspan =0;
-			numberCellColspanAndRowspan =0;
+			if (!hasException) {
+				wellformedMatrixTables.add(matrix);
+			} else {
+				nonWellformedMatrixTables.add(matrix);
+			}
+
+			hasException = false;
+			numberCellOnlyColspan = 0;
+			numberCellOnlyRowspan = 0;
+			numberCellColspanAndRowspan = 0;
 			numberNestedTables = 0;
-			
+
 		}
-		return matrixTables;
+		return wellformedMatrixTables;
 	}
+	
 	
 	/**
 	 * returns header row index
@@ -1488,16 +1503,12 @@ public class WikiTextParser {
 			headers = translateHeaderCell3(row);
 		} else {
 			headers = translateCell2(row);
-			for(String headerCell: headers)
-			{
-				if (!headerCell.contains("||"))
-				{
+			for (String headerCell : headers) {
+				if (!headerCell.contains("||")) {
 					headers2.add(headerCell);
-				}
-				else {
+				} else {
 					headers3 = headerCell.split("\\|\\|");
-					for (int k =0;k<headers3.length;k++)
-					{
+					for (int k = 0; k < headers3.length; k++) {
 						headers2.add(headers3[k]);
 					}
 				}
@@ -1511,7 +1522,7 @@ public class WikiTextParser {
 		// for each header cell parse the cell
 		if (header == true) {
 			for (String cell : headers) {
-				cell = pipePattern.matcher(cell).replaceAll("");
+				// cell = pipePattern.matcher(cell).replaceAll("");
 				cell = newlinePattern.matcher(cell).replaceAll("");
 				cell = cell.trim();
 				matrix = parseCell(cell, i, matrix, type);
@@ -1520,7 +1531,7 @@ public class WikiTextParser {
 			}
 		} else {
 			for (String cell : headers) {
-				cell = pipePattern.matcher(cell).replaceAll("");
+				// cell = pipePattern.matcher(cell).replaceAll("");
 				cell = newlinePattern.matcher(cell).replaceAll("");
 				cell = cell.trim();
 
@@ -1533,9 +1544,10 @@ public class WikiTextParser {
 	}
 
 	public Cell[][] parseCell(String cell, int i, Cell[][] matrix, String type) {
+
 		Cell[][] cellTable;
 		ArrayList<String> var = varTable.createTable(cell);
-		
+
 		if (var.isEmpty()) {
 			// cell = pipePattern.matcher(cell).replaceAll("");
 			if ((cell.contains("colspan")) && (!cell.contains("rowspan"))) {
@@ -1544,7 +1556,7 @@ public class WikiTextParser {
 				int countercolumn = regexparser.extractColspanDigit(cell);
 				// fill table
 				matrix = fillHorizontal(cell, countercolumn, matrix, i, type);
-				//hasColspan = true;
+				// hasColspan = true;
 				numberCellOnlyColspan++;
 
 			} else if ((cell.contains("rowspan")) && (!cell.contains("colspan"))) {
@@ -1555,7 +1567,7 @@ public class WikiTextParser {
 				// fill table
 				matrix = fillVertical(cell, counterrow, matrix, i, type);
 				numberCellOnlyRowspan++;
-				//hasRowspan = true;
+				// hasRowspan = true;
 
 			} else if ((cell.contains("rowspan")) && (cell.contains("colspan"))) {
 
@@ -1564,25 +1576,25 @@ public class WikiTextParser {
 
 				int countercolumn = regexparser.extractColspanDigit(cell);
 				int counterRow = regexparser.extractRowspanDigit(cell);
-				
+
 				matrix = fillHorizontalVertical(cell, countercolumn, counterRow, matrix, i, type);
 				numberCellColspanAndRowspan++;
-				hasMixRowspanAndColspan= true;
+				hasMixRowspanAndColspan = true;
 			} else {
 				matrix = fillVertical(cell, 1, matrix, i, type);
 			}
+
 		} else {
-			hasNestedTable=true;
+			hasNestedTable = true;
 			cellTable = parseTable(cell);
 			String cellTableString = ConvertArrayToString(cell);
 			type = "nested table";
 			matrix = fillVertical(cellTableString, 1, matrix, i, type);
-			numberNestedTables ++;
+			numberNestedTables++;
 		}
-	
+
 		return matrix;
 	}
-
 	/**
 	 * Method that fills table horizontally
 	 * 
@@ -1596,31 +1608,30 @@ public class WikiTextParser {
 
 		cellvalue = colspanCleanupPattern.matcher(cellvalue).replaceAll("");
 		cellvalue = colspanCleanupPattern2.matcher(cellvalue).replaceAll("");
-		//cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		// cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
 		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 
 		// cellvalue = .matcher(cellvalue).replaceAll("");
 		int j = 0;
-try{
-		while (table[i][j] != null) {
-			try {
-				j++;
-				if (table[i][j] == null) {
-					break;
+		try {
+			while (table[i][j] != null) {
+				try {
+					j++;
+					if (table[i][j] == null) {
+						break;
+					}
+				} catch (ArrayIndexOutOfBoundsException e) {
+					System.out.println("table isn't well structured");
+					hasException = true;
+
 				}
-			} catch (ArrayIndexOutOfBoundsException e) {
-				System.out.println("table isn't well structured");
-				hasException = true;
+
 			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			System.out.println("table isn't well structured");
+			hasException = true;
 
 		}
-}
-catch(ArrayIndexOutOfBoundsException e)
-{
-	System.out.println("table isn't well structured");
-	hasException = true;
-	
-}
 
 		while (numberContent > 0) {
 			try {
@@ -1631,12 +1642,14 @@ catch(ArrayIndexOutOfBoundsException e)
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.out.println("table isn't well structured");
 				hasException = true;
+
 				break;
 			}
 		}
 
 		return table;
 	}
+
 
 	/**
 	 * Method that fills table vertically
@@ -1650,11 +1663,14 @@ catch(ArrayIndexOutOfBoundsException e)
 
 	public Cell[][] fillVertical(String cellvalue, int numberContent, Cell[][] table, int i, String type) {
 
-		if (cellvalue.contains("rowspan")) {
-			cellvalue = rowspanCleanupPattern.matcher(cellvalue).replaceAll("");
-			cellvalue = rowspanCleanupPattern2.matcher(cellvalue).replaceAll("");
-		}
-		//cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
+		boolean cellHasRowspan = false;
+
+		/*
+		 * if (cellvalue.contains("rowspan")) { cellvalue =
+		 * rowspanCleanupPattern.matcher(cellvalue).replaceAll(""); cellvalue =
+		 * rowspanCleanupPattern2.matcher(cellvalue).replaceAll(""); }
+		 */
+		// cellvalue = pipePattern.matcher(cellvalue).replaceAll("");
 		cellvalue = regexparser.regexAttributeStyle(cellvalue);
 		int j = 0;
 		try {
@@ -1665,31 +1681,37 @@ catch(ArrayIndexOutOfBoundsException e)
 						break;
 					}
 				} catch (ArrayIndexOutOfBoundsException e) {
-					System.out.println("table " + numTable +" isn't well structured: It runs out of size ");
+					System.out.println("table " + numTable + " isn't well structured: It runs out of size ");
 					hasException = true;
+
 				}
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
-			System.out.println("table " + numTable +" isn't well structured: It runs out of size");
+			System.out.println("table " + numTable + " isn't well structured: It runs out of size");
 		}
 
 		while (numberContent > 0) {
 			try {
-				Cell cell1 = new Cell(type, cellvalue);
+				if (cellvalue.contains("rowspan")) {
+					cellHasRowspan = true;
+					cellvalue = rowspanCleanupPattern.matcher(cellvalue).replaceAll("");
+					cellvalue = rowspanCleanupPattern2.matcher(cellvalue).replaceAll("");
+				}
+				Cell cell1 = new Cell(type, cellvalue, cellHasRowspan);
 				table[i][j] = cell1;
 
 				numberContent--;
 				i++;
 			} catch (ArrayIndexOutOfBoundsException e) {
-				System.out.println("table " + numTable +" isn't well structured: It runs out of size");
+				System.out.println("table " + numTable + " isn't well structured: It runs out of size");
 				hasException = true;
+
 				break;
 			}
 		}
-
+		cellHasRowspan = false;
 		return table;
 	}
-
 	/**
 	 * Method that fills table vertically and horizontally when we have colspan
 	 * and rowspan in the same cell
@@ -1721,6 +1743,7 @@ catch(ArrayIndexOutOfBoundsException e)
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.out.println("table isn't well structured");
 				hasException = true;
+				// table[i][j].setHasException(hasException);
 			}
 		}
 
@@ -1731,14 +1754,15 @@ catch(ArrayIndexOutOfBoundsException e)
 		for (m = i; m < finrow; m++) {
 			for (n = j; n < fincolumn; n++) {
 				try {
-					
+
 					Cell cell1 = new Cell(type, cellvalue);
 					table[m][n] = cell1;
 				}
 
 				catch (ArrayIndexOutOfBoundsException e) {
 					System.out.println("table isn't well structured");
-					hasException = true;	
+					hasException = true;
+					// table[i][j].setHasException(hasException);
 				}
 			}
 

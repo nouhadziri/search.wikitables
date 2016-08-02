@@ -10,12 +10,14 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ca.ualberta.wikipedia.rdf.Triple;
 import ca.ualberta.wikipedia.rdf.WordShapeClassifier;
 import ca.ualberta.wikipedia.tablereader.Cell;
 
 
 
 public class GenerateRdf {
+
 	int i = 0;
 	public WordShapeClassifier wordClassifier = new WordShapeClassifier();
 	// public String IDWiki = null;
@@ -36,7 +38,13 @@ public class GenerateRdf {
 		/*
 		 * if (matrix[0][0].getContent().contains("|+")) { i++; }
 		 */
+
+		matrix = deleteEmptyColumn(matrix);
 		cleanUpMatrix(matrix);
+		if (checkDigital(matrix)) {
+			System.out.println("No triple");
+			return tripleList;
+		}
 		matrix = predicteEntityColumn1(matrix, "Xx Xx", 0);
 		// matrix = predicteEntityColumn(matrix);
 		// matrix = reOrderMatrix(matrix);
@@ -50,12 +58,33 @@ public class GenerateRdf {
 			j = k;
 			tripleList = getTriples(subject, object, predicate, matrix, i, j, k);
 
-		} else if (i == 1) {
+		}
+
+		else if (i == -1) {
+			// le 30/07 j'ai change i==matrix.length par i=-1
+			// if a table does not have a header so we don't generate triples
+			// because
+			// we don't have predicate
+			System.out.println("this table does not have a header !");
+		 System.out.println("No triple");
+			String predicateHeader = "property";
+			for (int p = 0; p < matrix[0].length; p++) {
+				matrix[0][p].setContent(predicateHeader);
+				// System.out.println(p);
+			}
+			i = 1;
+			k = checkColspan(matrix, i);
+			j = k;
+			//tripleList = getTriples(subject, object, predicate, matrix, i, j, k);
+		}
+
+		else {
 			i++;
 			// in this case we have for the first row {| class=" dnd "|-
 			// so the first row(0) will be empty that's why our headers will be
 			// in row (1)
 			// and subject row (2)
+			int n = i - 1;
 			while (i < matrix.length) {
 				subject = matrix[i][j].getContent().trim();
 				subject = parseCurlCell(subject);
@@ -68,7 +97,7 @@ public class GenerateRdf {
 
 						for (; j < matrix[i].length - 1; j++) {
 
-							predicate = "has_" + parseLinkCell1(parseCurlCell(matrix[1][j + 1].getContent().trim()));
+							predicate = "has_" + parseLinkCell1(parseCurlCell(matrix[n][j + 1].getContent().trim()));
 							predicate = predicatePrefix + predicate;
 							object = parseLinkCell1(parseCurlCell(parseLinkCell(matrix[i][j + 1].getContent().trim())));
 							object = regexReplaceWhiteSpace(object);
@@ -105,20 +134,6 @@ public class GenerateRdf {
 			}
 		}
 
-		else if (i == matrix.length) {
-
-			System.out.println("this table does not have a header !");
-			String predicateHeader = "property";
-			for (int p = 0; p < matrix[0].length; p++) {
-				matrix[0][p].setContent(predicateHeader);
-				// System.out.println(p);
-			}
-			i = 1;
-			k = checkColspan(matrix, i);
-			j = k;
-			tripleList = getTriples(subject, object, predicate, matrix, i, j, k);
-		}
-
 		return tripleList;
 	}
 
@@ -132,17 +147,29 @@ public class GenerateRdf {
 			subject = regexReplaceWhiteSpace(subject);
 			subject = wikiIdURI + subject;
 			try {
-				while (j < matrix[i].length - 1) {
+				for (; j < matrix[i].length - 1; j++) {
 					try {
 
 						predicate = "has_" + parseLinkCell1(parseCurlCell(matrix[0][j + 1].getContent()));
 						predicate = predicatePrefix + predicate;
 						object = parseLinkCell1(parseCurlCell(matrix[i][j + 1].getContent()));
 						object = regexReplaceWhiteSpace(object);
-						Triple<String, String, String> tripleRDF = new Triple<String, String, String>(subject,
-								predicate, object);
-						tripleList.add(tripleRDF);
-						j++;
+						if (!wordClassifier.wordShape(object.trim(), 2).contains("d")) {
+							String[] temp = object.split("\\s*,\\s*");
+							for (int m = 0; m < temp.length; m++) {
+
+								object = temp[m];
+								Triple<String, String, String> tripleRDF = new Triple<String, String, String>(subject,
+										predicate, object);
+								tripleList.add(tripleRDF);
+							}
+
+						} else {
+							Triple<String, String, String> tripleRDF = new Triple<String, String, String>(subject,
+									predicate, object);
+							tripleList.add(tripleRDF);
+						}
+
 					} catch (ArrayIndexOutOfBoundsException e) {
 						// System.out.println("cell is empty");
 						// i++;
@@ -199,6 +226,22 @@ public class GenerateRdf {
 
 	}
 
+	/**
+	 * tells us if a table has more than one header row
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+	public ArrayList<Integer> getIndexAllHeaders(Cell[][] matrix) {
+		ArrayList<Integer> list = new ArrayList<Integer>();
+		for (int i = 0; i < matrix.length; i++) {
+			if (tableHaveHeader(matrix, i)) {
+				list.add(i);
+			}
+		}
+		return list;
+	}
+
 	public String regexReplaceWhiteSpace(String subject) {
 		Pattern checkRegex = Pattern.compile("\\s+", Pattern.MULTILINE | Pattern.DOTALL);
 		Matcher regexMatcher = checkRegex.matcher(subject);
@@ -245,7 +288,7 @@ public class GenerateRdf {
 	 */
 	public int getIndexRowHeader(Cell[][] matrix) {
 		int i = 0;
-
+		int k = 0;
 		try {
 			while (i < matrix.length) {
 				while (tableHaveHeader(matrix, i)) {
@@ -253,11 +296,18 @@ public class GenerateRdf {
 
 				}
 				i++;
+				if (i == matrix.length) {
+					System.out.println("Table with no headers");
+					k = -1;
+				}
 
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
 			System.out.println("Index out of bounds");
+			// System.out.println("Table with no headers");
+			// i=-1;
 		}
+		i = k;
 		return i;
 	}
 
@@ -269,14 +319,34 @@ public class GenerateRdf {
 
 		for (int i = 0; i < matrix.length; i++) {
 			try {
-				Cell cell = new Cell(matrix[i][j].getType(), matrix[i][j].getContent());
+				Cell cell = new Cell(matrix[i][j].getType(), matrix[i][j].getContent(),
+						matrix[i][j].isCellHasRowspan());
 				columnMatrix[i] = cell;
+			} catch (ArrayIndexOutOfBoundsException e) {
+				System.out.println("it runs out of bounds: read column");
+			}
+
+		}
+
+		return columnMatrix;
+	}
+
+	public Cell[] readRow(int i, Cell[][] matrix) {
+
+		int column = matrix[0].length;
+
+		Cell[] rowMatrix = new Cell[column];
+
+		for (int j = 0; j < matrix[0].length; j++) {
+			try {
+				Cell cell = new Cell(matrix[i][j].getType(), matrix[i][j].getContent());
+				rowMatrix[j] = cell;
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.out.println("it runs out of bounds: read column");
 			}
 		}
 
-		return columnMatrix;
+		return rowMatrix;
 	}
 
 	public int getSizeOfItemssplitted(String cell) {
@@ -495,6 +565,31 @@ public class GenerateRdf {
 		return matrix1;
 	}
 
+	/**
+	 * deletes one given row it's not good!!!
+	 * 
+	 * @param matrix
+	 * @param col
+	 * @return
+	 */
+	public Cell[][] deleteRow(Cell[][] matrix, int row) {
+		Cell[][] matrix1 = new Cell[matrix.length - 1][matrix[0].length];
+		if (matrix != null && matrix.length > row && matrix[0].length > 0) {
+
+			for (int i = 0; i < matrix.length; i++) {
+				int newColIdx = 0;
+				for (int j = 0; j < matrix[i].length; j++) {
+					if (j != row) {
+						matrix1[i][newColIdx] = new Cell(matrix[i][j].getType(), matrix[i][j].getContent());
+						newColIdx++;
+					}
+				}
+			}
+		}
+
+		return matrix1;
+	}
+
 	public boolean checkYear(String cell) {
 		cell = cell.trim();
 		boolean var = false;
@@ -519,11 +614,42 @@ public class GenerateRdf {
 	public boolean checkMonth(String cell) {
 		Pattern patternCleanup = Pattern.compile("\\.");
 		cell = patternCleanup.matcher(cell).replaceAll("");
-		String digitRegex = "[J-j]anuary|[F-f]ebruary|[M-m]ars|[A-a]pril|[M-m]ay|[J-j]une|[J-j]ully|[A-a]ugust|[S-s]eptember|[O-o]ctober|[N-n]ovember|[D-d]ecember";
+		String digitRegex = "[J-j]anuary|[F-f]ebruary|[M-m]ars|[A-a]pril|[M-m]ay|[J-j]une|[J-j]uly|[A-a]ugust|[S-s]eptember|[O-o]ctober|[N-n]ovember|[D-d]ecember|JANUARY|FEBRUARY|MARS|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER";
 		Pattern pattern = Pattern.compile(digitRegex);
 
 		return pattern.matcher(cell).find();
 
+	}
+
+	/**
+	 * checks if the cells of the column has month data
+	 * 
+	 * @param column
+	 * @return
+	 */
+	public boolean checkColumnMonth(Cell[] column) {
+		int positive = 0;
+		int negative = 0;
+		boolean hasMonth = false;
+		ArrayList<Boolean> listboolean = new ArrayList<Boolean>();
+		for (int i = 0; i < column.length; i++) {
+			listboolean.add(checkMonth(column[i].getContent()));
+		}
+
+		for (boolean result : listboolean) {
+			if (result) {
+				positive++;
+			} else {
+				negative++;
+			}
+		}
+
+		if (positive > negative) {
+			hasMonth = true;
+		} else {
+			hasMonth = false;
+		}
+		return hasMonth;
 	}
 
 	public boolean checkFlag(String cell) {
@@ -553,21 +679,23 @@ public class GenerateRdf {
 		ArrayList<Integer> listIndex = new ArrayList<Integer>();
 		int j = 0;
 		int i = getIndexRowHeader(matrix);
-		while (j < matrix[0].length) {
-			try {
-				String cell2 = matrix[i][j + 1].getContent();
+		if (i != -1) {
+			while (j < matrix[0].length) {
+				try {
+					String cell2 = matrix[i][j + 1].getContent();
 
-				while (!(matrix[i][0].getContent().equals(cell2))) {
+					while (!(matrix[i][0].getContent().equals(cell2))) {
+						j++;
+						cell2 = matrix[i][j + 1].getContent();
+
+					}
+					listIndex.add(j);
 					j++;
-					cell2 = matrix[i][j + 1].getContent();
+				} catch (ArrayIndexOutOfBoundsException e) {
+					System.out.println("");
+					j++;
 
 				}
-				listIndex.add(j);
-				j++;
-			} catch (ArrayIndexOutOfBoundsException e) {
-				System.out.println("repeated headers ,run out of size");
-				j++;
-
 			}
 		}
 
@@ -589,40 +717,45 @@ public class GenerateRdf {
 		ArrayList<Cell[][]> listMatrix = new ArrayList<Cell[][]>();
 		ArrayList<Integer> listIndex = getIndexRepeatedHeaders(matrix);
 		int n = 0;
-		Cell[][] matrix1 = new Cell[matrix.length][listIndex.get(0) + 1];
-		Cell[][] matrix2 = new Cell[matrix.length][listIndex.get(0) + 1];
-		for (int m = 0; m < listIndex.size(); m++) {
+		int p = 0;
+		if (!listIndex.isEmpty()) {
+			Cell[][] matrix1 = new Cell[matrix.length][listIndex.get(0) + 1];
+			Cell[][] matrix2 = new Cell[matrix.length][listIndex.get(0) + 1];
+			for (int m = 0; m < listIndex.size(); m++) {
 
-			int k = listIndex.get(m);
+				int k = listIndex.get(m);
+
+				for (int i = 0; i < matrix.length; i++) {
+					for (int j = n; j < k + 1; j++) {
+						Cell cell1 = new Cell(matrix[i][j].getType(), matrix[i][j].getContent());
+						matrix1[i][j - p] = cell1;
+
+					}
+				}
+				listMatrix.add(matrix1);
+
+				n = listIndex.get(m) + 1;
+				matrix1 = new Cell[matrix.length][listIndex.get(0) + 1];
+				p = n;
+			}
 
 			for (int i = 0; i < matrix.length; i++) {
-				for (int j = n; j < k + 1; j++) {
-					Cell cell1 = new Cell(matrix[i][j].getType(), matrix[i][j].getContent());
-					matrix1[i][j] = cell1;
+				for (int j = n; j < matrix[0].length; j++) {
+					try {
+						String var1 = matrix[i][j].getType();
+						String var2 = matrix[i][j].getContent();
+						Cell cell2 = new Cell(var1, var2);
+						matrix2[i][j - n] = cell2;
+					} catch (ArrayIndexOutOfBoundsException e) {
+
+					}
 
 				}
 			}
-			listMatrix.add(matrix1);
-
-			n = listIndex.get(m) + 1;
+			listMatrix.add(matrix2);
+		} else {
+			System.out.println("we don't have duplicated headers, table cannot be divided");
 		}
-
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = n; j < matrix[0].length; j++) {
-				try {
-					String var1 = matrix[i][j].getType();
-					String var2 = matrix[i][j].getContent();
-					// WHY ????????? NULLL??
-					Cell cell2 = new Cell(var1, var2);
-					matrix2[i][j] = cell2;
-
-				} catch (ArrayIndexOutOfBoundsException e) {
-					// System.out.println("");
-				}
-			}
-		}
-		listMatrix.add(matrix2);
-
 		return listMatrix;
 	}
 
@@ -644,6 +777,31 @@ public class GenerateRdf {
 			}
 		}
 	}
+
+	/*
+	 * public void printOutMatrix(ArrayList<Cell[][]> matrixes) {
+	 * 
+	 * for (Cell[][] matrix : matrixes) { cleanUpMatrix(matrix);
+	 * ArrayList<Cell[][]> listDividedMatrix = divideMatrix(matrix); if
+	 * (listDividedMatrix.isEmpty()){
+	 * 
+	 * 
+	 * for (int i = 0; i < matrix.length; i++) { for (int j = 0; j <
+	 * matrix[0].length; j++) { try { if (matrix[i][j].getContent() == "null") {
+	 * continue; } System.out.print(matrix[i][j].getContent() + " "); } catch
+	 * (java.lang.NullPointerException e) { // System.out.print(""); } }
+	 * System.out.print("\n"); } } else{ for(Cell[][]
+	 * dividedMatrix:listDividedMatrix ) { for (int i = 0; i <
+	 * dividedMatrix.length; i++) { for (int j = 0; j < dividedMatrix[0].length;
+	 * j++) { try { if (dividedMatrix[i][j].getContent() == "null") { continue;
+	 * } System.out.print(dividedMatrix[i][j].getContent() + " "); } catch
+	 * (java.lang.NullPointerException e) { // System.out.print(""); } }
+	 * System.out.print("\n"); } }
+	 * 
+	 * } }
+	 * 
+	 * }
+	 */
 
 	public String parseLinkCell(String cell) {
 		String listString = "";
@@ -771,6 +929,27 @@ public class GenerateRdf {
 		return link;
 	}
 
+	public String parseFlag(String cell) {
+
+		String link = cell;
+		Pattern catPattern = Pattern.compile("\\{\\{flagcountry\\|(.*?)\\}\\}", Pattern.MULTILINE);
+		Matcher matcher = catPattern.matcher(cell);
+		while (matcher.find()) {
+			String[] temp = matcher.group(1).split("\\|");
+
+			if (temp == null || temp.length == 0) {
+				return link;
+			}
+
+			if (temp.length > 1) {
+				link = temp[1] + " " + temp[2];
+			} else {
+				link = temp[0];
+			}
+		}
+		return link;
+	}
+
 	public String regexRefCleanup(String cell) {
 
 		Matcher regexMatcher = Pattern.compile("\\{\\{ref(.*?)\\}\\}", Pattern.MULTILINE).matcher(cell);
@@ -801,6 +980,36 @@ public class GenerateRdf {
 
 	}
 
+	public String regexRefCleanup2(String cell) {
+
+		Matcher regexMatcher = Pattern.compile("<ref(.*?)\\/>", Pattern.MULTILINE).matcher(cell);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				cell = regexMatcher.replaceAll("");
+
+			}
+		}
+
+		return cell;
+
+	}
+
+	public String regexRefCleanup3(String cell) {
+
+		Matcher regexMatcher = Pattern.compile("\\{\\{ref(.*?)\\}\\}", Pattern.MULTILINE).matcher(cell);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				cell = regexMatcher.replaceAll("");
+
+			}
+		}
+
+		return cell;
+
+	}
+
 	private static Pattern pipePattern = Pattern.compile("\\|", Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern markPattern = Pattern.compile("\\!", Pattern.MULTILINE | Pattern.DOTALL);
 
@@ -809,6 +1018,13 @@ public class GenerateRdf {
 		Pattern brPattern = Pattern.compile("<br\\s*\\/>", Pattern.MULTILINE | Pattern.DOTALL);
 		Pattern quotePattern = Pattern.compile("'''", Pattern.MULTILINE | Pattern.DOTALL);
 		Pattern quotePattern1 = Pattern.compile("''", Pattern.MULTILINE | Pattern.DOTALL);
+		Pattern centerPattern = Pattern.compile("<center>", Pattern.MULTILINE | Pattern.DOTALL);
+		Pattern smallPattern = Pattern.compile("<small>", Pattern.MULTILINE | Pattern.DOTALL);
+		Pattern smallPattern1 = Pattern.compile("</small>", Pattern.MULTILINE | Pattern.DOTALL);
+		Pattern ClassCleanupPatternWithNoQuotes = Pattern.compile("\\bclass\\s*=\\s*[A-Za-z]*",
+				Pattern.MULTILINE | Pattern.DOTALL);
+		Pattern bgcolorPatternWithNoQuotes = Pattern.compile("\\bbgcolor\\s*=\\s*[#A-Za-z0123456789]*",
+				Pattern.MULTILINE | Pattern.DOTALL);
 
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[0].length; j++) {
@@ -818,17 +1034,27 @@ public class GenerateRdf {
 					}
 
 					String varCell = matrix[i][j].getContent();
+
 					varCell = regexRefCleanup1(varCell);
+					varCell = regexRefCleanup2(varCell);
+					varCell = regexRefCleanup3(varCell);
 					varCell = markPattern.matcher(varCell).replaceAll("");
 					varCell = brPattern.matcher(varCell).replaceAll("");
 					varCell = quotePattern.matcher(varCell).replaceAll("");
 					varCell = quotePattern1.matcher(varCell).replaceAll("");
+					varCell = centerPattern.matcher(varCell).replaceAll("");
+					varCell = smallPattern1.matcher(varCell).replaceAll("");
+					varCell = smallPattern.matcher(varCell).replaceAll("");
+					varCell = ClassCleanupPatternWithNoQuotes.matcher(varCell).replaceAll("");
+					varCell = bgcolorPatternWithNoQuotes.matcher(varCell).replaceAll("");
+					varCell = parseFlag(varCell);
 					varCell = parseLinkCell(varCell);
-
+					varCell = parseCurlCell(varCell);
 					varCell = parseLinkCell1(varCell);
 					varCell = parseLinkCellAge(varCell);
+					varCell = varCell.trim();
 
-					varCell = parseCurlCell(varCell);
+					// varCell = parseCurlCell(varCell);
 
 					varCell = pipePattern.matcher(varCell).replaceAll("");
 
@@ -1201,14 +1427,21 @@ public class GenerateRdf {
 		boolean var = false;
 		while (j < matrix[0].length) {
 			ArrayList<String> shapeColumn = predicteColumnShape1(matrix, j);
+			Cell[] column = readColumn(j, matrix);
 			for (String shape : shapeColumn) {
 				if (shape.equals(wordShape)) {
 					var = true;
-					return j;
+					// here we have to check if the column values are not month.
+					boolean check= checkColumnMonth(column);
+					if (!checkColumnMonth(column)) {
+						return j;
+					}
+
 				} else {
-					j++;
+					continue;
 				}
 			}
+			j++;
 
 		}
 		if (!var) {
@@ -1309,8 +1542,10 @@ public class GenerateRdf {
 		String subject = null;
 		String predicate = null;
 		String object = null;
-
+		// if there's empty column we delete it
+		// matrix = deleteEmptyColumn(matrix);
 		cleanUpMatrix(matrix);
+
 		// we don't have to reorder the matrix, even we don't have
 		// to search for the column entity
 		// We're just added an empty node column, the advantage
@@ -1324,6 +1559,11 @@ public class GenerateRdf {
 		// matrix = reOrderMatrix(matrix);
 		int i = getIndexRowHeader(matrix);
 
+		if (checkDigital(matrix)) {
+			System.out.println("No triple");
+			return tripleList;
+		}
+
 		if (i == 0) {
 			i++;
 			// we have a header in the first row of the matrix
@@ -1332,12 +1572,31 @@ public class GenerateRdf {
 			j = k;
 			tripleList = getTriples(subject, object, predicate, matrix, i, j, k);
 
-		} else if (i == 1) {
+		}
+
+		else if (i == -1) {
+
+			System.out.println("this table does not have a header !");
+			System.out.println("No triple");
+
+			String predicateHeader = "property";
+			for (int p = 0; p < matrix[0].length; p++) {
+				matrix[0][p].setContent(predicateHeader);
+				// System.out.println(p);
+			}
+			i = 1;
+			k = checkColspan(matrix, i);
+			j = k;
+			//tripleList = getTriples(subject, object, predicate, matrix, i, j, k);
+		}
+
+		else {
 			i++;
 			// in this case we have for the first row {| class=" and "|-
 			// so the first row(0) will be empty that's why our headers will be
 			// in row (1)
 			// and subject row (2)
+			int n = i - 1;
 			while (i < matrix.length) {
 				subject = matrix[i][j].getContent().trim();
 
@@ -1346,7 +1605,7 @@ public class GenerateRdf {
 					try {
 						for (; j < matrix[i].length - 1; j++) {
 
-							predicate = "has_" + parseLinkCell1(parseCurlCell(matrix[1][j + 1].getContent().trim()));
+							predicate = "has_" + parseLinkCell1(parseCurlCell(matrix[n][j + 1].getContent().trim()));
 							predicate = predicatePrefix + predicate;
 							object = parseLinkCell1(parseCurlCell(parseLinkCell(matrix[i][j + 1].getContent().trim())));
 
@@ -1370,20 +1629,6 @@ public class GenerateRdf {
 			}
 		}
 
-		else if (i == matrix.length) {
-
-			System.out.println("this table does not have a header !");
-			String predicateHeader = "property";
-			for (int p = 0; p < matrix[0].length; p++) {
-				matrix[0][p].setContent(predicateHeader);
-				// System.out.println(p);
-			}
-			i = 1;
-			k = checkColspan(matrix, i);
-			j = k;
-			tripleList = getTriples(subject, object, predicate, matrix, i, j, k);
-		}
-
 		return tripleList;
 	}
 
@@ -1393,6 +1638,7 @@ public class GenerateRdf {
 	 * 
 	 * @param listMatrix
 	 */
+
 	public void printOutRDFTripleBlankNode(ArrayList<Cell[][]> listMatrix) {
 		for (Cell[][] matrix : listMatrix) {
 			matrix = addBlankNode(matrix);
@@ -1404,11 +1650,37 @@ public class GenerateRdf {
 
 		}
 	}
+	/*
+	 * public void printOutRDFTripleBlankNode(ArrayList<Cell[][]> listMatrix) {
+	 * 
+	 * // for every matrix, we check whether we have duplicated headers, //if
+	 * so, we divide our matrix and as result ,we got list of others matrix
+	 * 
+	 * for (Cell[][] matrix : listMatrix) {
+	 * 
+	 * ArrayList<Cell[][]> dividedMatrix= divideMatrix(matrix);
+	 * if(dividedMatrix.isEmpty()){ matrix = addBlankNode(matrix);
+	 * ArrayList<Triple<String, String, String>> listTriple =
+	 * produceRDFforBlankNode(matrix); for (Triple<String, String, String>
+	 * triple : listTriple) { System.out.println("RDF Triple:  " + triple);
+	 * 
+	 * }} else{
+	 * 
+	 * for(Cell[][] matrix1: dividedMatrix) { matrix1 = addBlankNode(matrix1);
+	 * ArrayList<Triple<String, String, String>> listTriple =
+	 * produceRDFforBlankNode(matrix1); for (Triple<String, String, String>
+	 * triple : listTriple) { System.out.println("RDF Triple:  " + triple);
+	 * 
+	 * } } }
+	 * 
+	 * } }
+	 */
 
 	public Cell[][] reOrderMatrix(Cell[][] matrix, int column) {
 
 		// we're going to reorder the first column with our wordShape
 		// column(entity)
+		if(column<matrix[0].length){
 		Cell[] columnMatrix = readColumn(0, matrix);
 		for (int i = 0; i < matrix.length; i++) {
 			matrix[i][0] = matrix[i][column];
@@ -1416,12 +1688,16 @@ public class GenerateRdf {
 
 		for (int i = 0; i < matrix.length; i++) {
 			matrix[i][column] = columnMatrix[i];
+		}}
+		
+		else{
+			System.out.println("There is no subject column !!! reorder not possible");
 		}
 		return matrix;
 	}
 
 	/**
-	 * predicts entity column the good one
+	 * predicts the subject column the good one
 	 * 
 	 * @param matrix
 	 * @param wordShape
@@ -1433,6 +1709,221 @@ public class GenerateRdf {
 
 	public Cell[][] predicteEntityColumn1(Cell[][] matrix, String wordShape, int i) {
 
+		int numberOfColumns = matrix[0].length + 1;
+		cleanUpMatrix(matrix);
+		// String[] columnShape ={"Xx","Xx Xx Xx"};
+		String[] columnShape = { "Xx Xx Xx", "Xx" };
+
+		// we're going to reorder our matrix unless the first column is not our
+		// subject column. (How to know that ? we know that by
+		// searching for [Xx Xx] if we find it then we reorder
+		// otherwise we search for [Xx Xx Xx] if OK we reorder
+		// otherwise we search for [Xx]
+
+		// [Xx Xx] : we have likely a name, so it could be our subject column
+		// and we reorder our matrix
+		// otherwise our matrix remain the same
+
+		if (checkDigital(matrix)) {
+			System.out.println("This table doesn't have a key column");
+			return matrix;
+		}
+
+		int m = getIndexWordShape(matrix, wordShape);
+
+		if (m == -1) {
+			if (i == 2) {
+				// if there is no "Xx Xx" and no "Xx Xx Xx" and no "Xx"
+				// we're going to reorder the first column with the first non
+				// numerical column
+				// if the first column is non numerical so it's our key column
+				// System.out.println("This table doesn't have a key column");
+				m = getIndexNonNumericalColumn(matrix);
+				Cell[] column = readColumn(m, matrix);
+				if (checkColumnMonth(column)) {
+					m++;
+				}
+				if (!checkuniqueValue(matrix, m)) {
+					m++;
+				}
+				
+				m=getNonNumericalWordShape( matrix, m);
+				/*while (m < matrix[0].length) {
+					boolean notdigits = false;
+					ArrayList<String> words = predicteColumnShape1(matrix, m);
+					for (String word : words) {
+						if (word.contains("d")) {
+							m++;
+
+						} else {
+							notdigits = true;
+							break;
+						}
+
+					}
+					if (notdigits) {
+						break;
+					}
+				}*/
+				matrix = reOrderMatrix(matrix, m);
+				return matrix;
+			}
+
+			wordShape = columnShape[i];
+			if (i < columnShape.length) {
+				i++;
+			}
+			// System.out.println(wordShape + " Not found !!");
+			matrix = predicteEntityColumn1(matrix, wordShape, i);
+
+			return matrix;
+		}
+
+		if (m == 0 && checkuniqueValue(matrix, m)) {
+			// our first column is our subject column, so we don't reorder our
+			// matrix
+			return matrix;
+		}
+
+		else {
+
+			// if the number of columns is even, so our subject column must be
+			// the most left
+			// so if we have 4 columns our subject column should be in the first
+			// or second column
+			// pair
+			// even
+			boolean uni=checkuniqueValue(matrix, m);
+			if (numberOfColumns == 4) {
+				if (m <= 1 && checkuniqueValue(matrix, m)) {
+					matrix = reOrderMatrix(matrix, m);
+				} else {
+					// search for the other word shape
+					// search for the other word shape
+					if (i == 2) {
+						// if there is no "Xx Xx" and no "Xx Xx Xx" and no "Xx"
+						// we're going to reorder the first column with the
+						// first non
+						// numerical column
+						// if the first column is non numerical so it's our key
+						// column
+						// System.out.println("This table doesn't have a key
+						// column");
+						m = getIndexNonNumericalColumn(matrix);
+						Cell[] column = readColumn(m, matrix);
+						if (checkColumnMonth(column)) {
+							m++;
+						}
+						if (!checkuniqueValue(matrix, m)) {
+							m++;
+						}
+					/*	while (m < matrix[0].length) {
+							boolean notdigits = false;
+							ArrayList<String> words = predicteColumnShape1(matrix, m);
+							for (String word : words) {
+								if (word.contains("d")) {
+									m++;
+
+								} else {
+									notdigits = true;
+									break;
+								}
+
+							}
+							if (notdigits) {
+								break;
+							}
+						}*/
+						m=getNonNumericalWordShape(matrix, m);
+						matrix = reOrderMatrix(matrix, m);
+						return matrix;
+					}
+
+					wordShape = columnShape[i];
+					if (i < columnShape.length) {
+						i++;
+					}
+					// System.out.println(wordShape + " Not found !!");
+					matrix = predicteEntityColumn1(matrix, wordShape, i);
+
+					return matrix;
+				}
+
+			} else {
+				boolean var = checkuniqueValue(matrix, m);
+				if (m <= 1 && checkuniqueValue(matrix, m)) {
+					matrix = reOrderMatrix(matrix, m);
+				} else {
+					// search for the other word shape
+					// search for the other word shape
+					if (i == 2) {
+						// if there is no "Xx Xx" and no "Xx Xx Xx" and no "Xx"
+						// we're going to reorder the first column with the
+						// first non
+						// numerical column
+						// if the first column is non numerical so it's our key
+						// column
+						// System.out.println("This table doesn't have a key
+						// column");
+						m = getIndexNonNumericalColumn(matrix);
+						Cell[] column = readColumn(m, matrix);
+						if (checkColumnMonth(column)) {
+							m++;
+						}
+						if (!checkuniqueValue(matrix, m)) {
+							m++;
+						}
+						// String word =
+						// wordClassifier.wordShape(column[m].getContent().trim(),
+						// 2);
+				/*		while (m < matrix[0].length) {
+							boolean notdigits = false;
+							ArrayList<String> words = predicteColumnShape1(matrix, m);
+							for (String word : words) {
+								if (word.contains("d")) {
+									m++;
+
+								} else {
+									notdigits = true;
+									break;
+								}
+
+							}
+							if (notdigits) {
+								break;
+							}
+						}*/
+						m=getNonNumericalWordShape( matrix, m);
+						matrix = reOrderMatrix(matrix, m);
+						return matrix;
+					}
+
+					wordShape = columnShape[i];
+					if (i < columnShape.length) {
+						i++;
+					}
+					// System.out.println(wordShape + " Not found !!");
+					matrix = predicteEntityColumn1(matrix, wordShape, i);
+
+					return matrix;
+				}
+			}
+
+		}
+		return matrix;
+	}
+	
+	/**
+	 * 
+	 * predict subject column without checking weather the column has unique value.
+	 * @param matrix
+	 * @param wordShape
+	 * @param i
+	 * @return
+	 */
+	public Cell[][] predicteEntityColumnWithoutCheckingUniqueValue(Cell[][] matrix, String wordShape, int i) {
+
+		int numberOfColumns = matrix[0].length+1;
 		cleanUpMatrix(matrix);
 		// String[] columnShape ={"Xx","Xx Xx Xx"};
 		String[] columnShape = { "Xx Xx Xx", "Xx" };
@@ -1443,12 +1934,12 @@ public class GenerateRdf {
 		// otherwise we search for [Xx Xx Xx] if OK we reorder
 		// otherwise we search for [Xx]
 
-		// [Xx Xx] : we have most likely a name, so it could be our entity
+		// [Xx Xx] : we have likely a name, so it could be our entity
 		// and we reorder our matrix
 		// otherwise our matrix remain the same
 
 		if (checkDigital(matrix)) {
-			System.out.println("This table doesn't have an entity column");
+			System.out.println("This table doesn't have a key column");
 			return matrix;
 		}
 
@@ -1456,6 +1947,16 @@ public class GenerateRdf {
 
 		if (m == -1) {
 			if (i == 2) {
+				// if there is no "Xx Xx" and no "Xx Xx Xx" and no "Xx"
+				// we're going to reorder the first column with the first non
+				// numerical column
+				// if the first column is non numerical so it's our key column
+				// System.out.println("This table doesn't have a key column");
+				m = getIndexNonNumericalColumn(matrix);
+				Cell[] column = readColumn(m, matrix);
+				if(checkColumnMonth(column))
+				{m++;}
+				matrix = reOrderMatrix(matrix, m);
 				return matrix;
 			}
 
@@ -1476,11 +1977,80 @@ public class GenerateRdf {
 		}
 
 		else {
-			matrix = reOrderMatrix(matrix, m);
-		}
+			
+				//if the number of columns is even, so our subject column must be the most left
+				// so if we have 4 columns our subject column should be in the first or second column
+				//pair
+				//even
+			if(numberOfColumns ==4 ){
+				if (m<= 1)
+				{
+					matrix = reOrderMatrix(matrix, m);
+				}
+				else{
+					// search for the other word shape
+					// search for the other word shape
+					if (i == 2) {
+						// if there is no "Xx Xx" and no "Xx Xx Xx" and no "Xx"
+						// we're going to reorder the first column with the first non
+						// numerical column
+						// if the first column is non numerical so it's our key column
+						// System.out.println("This table doesn't have a key column");
+						m = getIndexNonNumericalColumn(matrix);
+						Cell[] column = readColumn(m, matrix);
+						if(checkColumnMonth(column))
+						{m++;}
+						matrix = reOrderMatrix(matrix, m);
+						return matrix;
+					}
 
+					wordShape = columnShape[i];
+					if (i < columnShape.length) {
+						i++;
+					}
+					// System.out.println(wordShape + " Not found !!");
+					matrix = predicteEntityColumn1(matrix, wordShape, i);
+
+					return matrix;
+				}
+			
+			}else{
+				if (m<= 1)
+				{
+					matrix = reOrderMatrix(matrix, m);
+				}
+				else{
+					// search for the other word shape
+					// search for the other word shape
+					if (i == 2) {
+						// if there is no "Xx Xx" and no "Xx Xx Xx" and no "Xx"
+						// we're going to reorder the first column with the first non
+						// numerical column
+						// if the first column is non numerical so it's our key column
+						// System.out.println("This table doesn't have a key column");
+						m = getIndexNonNumericalColumn(matrix);
+						Cell[] column = readColumn(m, matrix);
+						if(checkColumnMonth(column))
+						{m++;}
+						matrix = reOrderMatrix(matrix, m);
+						return matrix;
+					}
+
+					wordShape = columnShape[i];
+					if (i < columnShape.length) {
+						i++;
+					}
+					// System.out.println(wordShape + " Not found !!");
+					matrix = predicteEntityColumn1(matrix, wordShape, i);
+
+					return matrix;
+				}
+			}
+			
+					}
 		return matrix;
 	}
+
 
 	/**
 	 * this method will return true if all the columns are numerical
@@ -1496,7 +2066,322 @@ public class GenerateRdf {
 				}
 			}
 		}
-
+		if (hasdigit) {
+			System.out.println("No column key!!!");
+		}
 		return hasdigit;
 	}
+
+	/**
+	 * this method checks if all cell of column j are unique I'm not using this
+	 * method for instance
+	 * 
+	 * @param matrix
+	 * @param j
+	 * @return
+	 */
+	public boolean checkuniqueValue(Cell[][] matrix, int j) {
+		Cell[] column = readColumn(j, matrix);
+		boolean empty = true;
+		for (int i = 0; i < column.length; i++) {
+			if (column[i] != null) {
+				empty = false;
+				break;
+			}
+		}
+		boolean isUnique = true;
+		int i = getIndexRowHeader(matrix) + 1;
+		if (i != -1 && !empty) {
+			for (; i < column.length - 1; i++) {
+				for (int k = i + 1; k < column.length; k++) {
+					if ((column[i].getContent().equals(column[k].getContent()) && (column[i].isCellHasRowspan() == true)
+							&& (column[k].isCellHasRowspan()) == true)) {
+						continue;
+					} else if (column[i].getContent().equals(column[k].getContent())
+							&& (column[i].isCellHasRowspan() == false || column[i].isCellHasRowspan() == true)
+							&& (column[k].isCellHasRowspan()) == false) {
+						isUnique = false;
+						return isUnique;
+					}
+				}
+			}
+		} else {
+			System.out.println("we cannot read the column to check if it has unique value");
+		}
+		return isUnique;
+
+	}
+
+	public boolean checkuniqueValue1(Cell[][] matrix, int j) {
+		Cell[] column = readColumn(j, matrix);
+		int i = getIndexRowHeader(matrix) + 1;
+		if (i != -1) {
+
+		}
+
+		return false;
+	}
+
+	/**
+	 * returns the index of the first non numerical column in the matrix
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+
+	public int getIndexNonNumericalColumn(Cell[][] matrix) {
+
+		int j = 0;
+		boolean var = false;
+		while (j < matrix[0].length) {
+			ArrayList<String> shapeColumn = predicteColumnShape1(matrix, j);
+			for (String shape : shapeColumn) {
+				if (!shape.contains("d")) {
+					var = true;
+					return j;
+				} else {
+					continue;
+				}
+			}
+			j++;
+
+		}
+		if (!var) {
+			System.out.println("No ");
+			j = -1;
+		}
+
+		return j;
+	}
+
+	/**
+	 * not finished yet!!
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+	public ArrayList<Integer> getIndexEmptyColumn(Cell[][] matrix) {
+		cleanUpMatrix(matrix);
+
+		int k = 0;
+		ArrayList<Integer> listIndex = new ArrayList<Integer>();
+		int i = getIndexRowHeader(matrix) + 1;
+		boolean var = true;
+		int var2 = matrix.length;
+		for (int j = 0; j < matrix[0].length; j++) {
+			Cell[] column = readColumn(j, matrix);
+			for (; i < column.length; i++) {
+				String var5 = column[i].getContent();
+				if (column[i].getContent().equals("")) {
+					k++;
+					var = true;
+				} else {
+					var = false;
+					break;
+				}
+
+			}
+			if ((k == (matrix.length - getIndexRowHeader(matrix) - 1)) && (var)) {
+				listIndex.add(j);
+			} else {
+				System.out.println("Column " + j + "is not empty");
+			}
+			 i = getIndexRowHeader(matrix) + 1;
+
+		}
+
+		return listIndex;
+	}
+
+	/**
+	 * We're going to delete empty rows in case there is misuse of wikimarkup
+	 * like |- |- consecutively, in this case we will have
+	 * emptyCell("emptycell","null") In most cases, there is not empty rows like
+	 * ""
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+	public ArrayList<Integer> getIndexEmptyRow(Cell[][] matrix) {
+
+		cleanUpMatrix(matrix);
+		int k = 0;
+		ArrayList<Integer> listIndex = new ArrayList<Integer>();
+
+		boolean var = true;
+		int var2 = matrix.length;
+		for (int i = 0; i < matrix.length; i++) {
+			Cell[] row = readRow(i, matrix);
+			for (int j = 0; j < row.length; j++) {
+
+				if (row[j].getContent().equals("null")) {
+					k++;
+					var = true;
+				}
+
+				else {
+					var = false;
+					break;
+				}
+
+			}
+			if ((k == matrix[0].length) && (var)) {
+				listIndex.add(i);
+			} else {
+				System.out.println("Row " + i + "is not empty");
+			}
+
+		}
+
+		return listIndex;
+	}
+
+	/**
+	 * deletes empty columns
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+	public Cell[][] deleteEmptyColumn(Cell[][] matrix) {
+		ArrayList<Integer> list = getIndexEmptyColumn(matrix);
+
+		if (list != null) {
+			int k = 0;
+			for (int index : list) {
+				if (k == 0) {
+					matrix = deleteColumn(matrix, index);
+					k++;
+				} else {
+					matrix = deleteColumn(matrix, index - 1);
+				}
+
+			}
+			int var = matrix[0].length;
+
+			if (matrix[0].length == 1) {
+				System.out.println("The matrix has 1 column, no RDF triples !!");
+				Cell emptyCell = new Cell("emptyCell", "null");
+				for (int m = 0; m < matrix.length; m++) {
+					for (int n = 0; n < matrix[0].length; n++) {
+						if (matrix[m][n] == null) {
+							matrix[m][n] = emptyCell;
+						}
+					}
+				}
+			}
+
+			// if the word shape is ":0" then this column is empty
+			// therefore we delete it
+			int m = getIndexWordShape(matrix, ":0");
+			if (m != -1) {
+				matrix = deleteColumn(matrix, m);
+			}
+		}
+		return matrix;
+	}
+
+	public Cell[][] deleteEmptyRow(Cell[][] matrix) {
+		ArrayList<Integer> list = getIndexEmptyRow(matrix);
+
+		if (list != null) {
+			for (int index : list) {
+
+				matrix = deleteRow(matrix, index);
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * this methods returns matrix's headers
+	 * 
+	 * @param matrix
+	 * @return
+	 */
+	public ArrayList<String> getHeaders(Cell[][] matrix) {
+		ArrayList<String> headers = new ArrayList<String>();
+		int i = getIndexRowHeader(matrix);
+		if (i != -1) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				headers.add(matrix[i][j].getContent());
+			}
+		} else {
+			System.out.println("No headers");
+			return headers;
+		}
+		return headers;
+
+	}
+
+	/*public void test(ArrayList<Cell[][]> listmatrix) {
+		for (Cell[][] matrix : listmatrix) {
+			ArrayList<Cell[][]> listDividedMatrix = divideMatrix(matrix);
+			if (!listDividedMatrix.isEmpty()) {
+				printOutRDFTriple(listDividedMatrix);
+			} else {
+				ArrayList<Triple<String, String, String>> listTriple = produceRDF(matrix);
+				for (Triple<String, String, String> triple : listTriple) {
+					System.out.println("RDF Triple:  " + triple);
+
+				}
+			}
+		}
+
+	}*/
+/*
+	private static Pattern ClassCleanupPatternWithNoQuotes = Pattern.compile("\\bwidth\\s*=\\s*\\S*\\|",
+			Pattern.MULTILINE | Pattern.DOTALL);
+
+	public String regexAttributeClassWithNoquotes(String table) {
+
+		Matcher regexMatcher = ClassCleanupPatternWithNoQuotes.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			} 
+				 * else System.out.println("not found !"); }
+				 
+		}
+		return table;
+
+	}*/
+	
+	public int getNonNumericalWordShape(Cell[][] matrix,int m)
+	{
+		while (m < matrix[0].length) {
+			boolean notdigits = false;
+			ArrayList<String> words = predicteColumnShape1(matrix, m);
+			for (String word : words) {
+				if (word.contains("d")) {
+					m++;
+
+				} else {
+					notdigits = true;
+					break;
+				}
+
+			}
+			if (notdigits) {
+				break;
+			}
+		}
+		
+		if(m>=matrix[0].length)
+		{
+			m=0;
+			ArrayList<String> words1 = predicteColumnShape1(matrix, m);
+			for (String word : words1) {
+				if (word.contains("d")) {
+					m++;
+
+				}
+		}
+		}
+	
+		return m;
+	}
+
 }

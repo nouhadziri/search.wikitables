@@ -213,16 +213,24 @@ public class WikiPage {
 
 		matrixTables = wikiTextParser.getAllMatrixFromTables();
 		
+		if (matrixTables.isEmpty())
+		{
+			System.out.println("There is non well-formed table to produce RDF triples");
+		}
+		else{
 		for (Cell[][] matrix : matrixTables) {
-			//System.out.println("\n***Matrix with blank node***\n");
 			
+			System.out.println("Unique column: "+rdf.checkuniqueValue(matrix, 0));
+			
+			System.out.println("Headers indexes"+rdf.getIndexAllHeaders(matrix));
+			
+			rdf.cleanUpMatrix(matrix);
+			System.out.println("list of headers: "+rdf.getHeaders(matrix));
 			System.out.println("This table contain a cast : "+rdf.checkCastMatrix(matrix));
 			// The method produceRDF() contains predicateEntityColumn() so
 			// we don't have to call it here
 			//matrix = rdf.predicteEntityColumn(matrix);
-			System.out.println("\n***Data type***\n");
-			
-			// rdf.annotateColumns(matrix);
+			//System.out.println("\n***Data type***\n");
 
 			rdf.cleanUpMatrix(matrix);
 			//System.out.println("Index Xx Xx is: " +rdf.getIndexWordShape(matrix,"Xx"));
@@ -252,7 +260,7 @@ public class WikiPage {
 		
 		
 		System.out.println("\n***RDF triples for blank node***\n");
-		rdf.printOutRDFTripleBlankNode(matrixTables);
+		rdf.printOutRDFTripleBlankNode(matrixTables);}
     }
     
 public int getCountColspan()
