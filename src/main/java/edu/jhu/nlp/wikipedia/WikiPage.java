@@ -1,5 +1,9 @@
 package edu.jhu.nlp.wikipedia;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -7,6 +11,10 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import ca.ualberta.wikipedia.rdf.Triple;
 import ca.ualberta.wikipedia.rdf.GenerateRdf;
 import ca.ualberta.wikipedia.tablereader.Cell;
 
@@ -206,8 +214,9 @@ public class WikiPage {
 		}
 
     }
-    
-    public void getRDFTriples()
+	public int numtable=0;
+
+    public void getRDFTriples() throws IOException, JSONException
     {
     	ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
 
@@ -218,6 +227,15 @@ public class WikiPage {
 			System.out.println("There is non well-formed table to produce RDF triples");
 		}
 		else{
+			
+			//JSONObject returnObj = new JSONObject();
+			File file = new File("/Users/nouhadziri/Desktop/toJson.json");
+			Writer fileWriter = new FileWriter(file);
+	    	JSONObject returnObj = new JSONObject();
+	    	JSONObject tableJSON = new JSONObject();
+			int numberColumns = 0;
+			int numberRows = 0;
+	    	
 		for (Cell[][] matrix : matrixTables) {
 			
 			System.out.println("Unique column: "+rdf.checkuniqueValue(matrix, 0));
@@ -227,30 +245,43 @@ public class WikiPage {
 			rdf.cleanUpMatrix(matrix);
 			System.out.println("list of headers: "+rdf.getHeaders(matrix));
 			System.out.println("This table contain a cast : "+rdf.checkCastMatrix(matrix));
-			// The method produceRDF() contains predicateEntityColumn() so
-			// we don't have to call it here
-			//matrix = rdf.predicteEntityColumn(matrix);
-			//System.out.println("\n***Data type***\n");
+		
 
 			rdf.cleanUpMatrix(matrix);
-			//System.out.println("Index Xx Xx is: " +rdf.getIndexWordShape(matrix,"Xx"));
+	
 			System.out.println("\n***Word Shape & Data type***\n");
-			/*
-			 * for (String name : rdf.buildHistogram(matrix, 0).keySet()) {
-			 * 
-			 * String key = name.toString(); String value =
-			 * rdf.buildHistogram(matrix, 0).get(name).toString();
-			 * System.out.println(key + " " + value);
-			 * 
-			 * }
-			 */
+		
 			for (int j = 0; j < matrix[0].length; j++) {
 
 				System.out.println("Data Type of column " + j + " : " + rdf.predicteColumnDataType(matrix, j));
 				System.out.println("Word Shape of column " + j + " : " + rdf.predicteColumnShape1(matrix, j));
 			}
-
+			ArrayList<Triple<String, String, String>> listTriple=null;
+			
+			ArrayList<String> headers = new ArrayList<String>();
+			
+			 listTriple = rdf.produceRDF(matrix);
+			 listTriple = rdf.produceRDF(matrix);
+				rdf.cleanUpMatrix(matrix);
+				numberColumns = matrix[0].length;
+				numberRows = matrix.length;
+				headers = rdf.getHeaders(matrix);
+				numtable++;
+				tableJSON.put("title", "mama mia");
+				tableJSON.put("table#", "table id from wikipedia" );
+				tableJSON.put("# rows", numberRows);
+				tableJSON.put("# columns",numberColumns);
+				tableJSON.put("list of headers ",headers);
+				tableJSON.put("list of triples ",listTriple);
+				returnObj.put("table"+numtable, tableJSON);
+				
+				tableJSON = new JSONObject();
+			//createJsonFile(matrix,returnObj,numtable);
 		}
+		
+		fileWriter.write(returnObj.toString(4));
+
+	    fileWriter.close();
 		System.out.println("\n ***Table structure*** \n");
 
 		rdf.printOutMatrix(matrixTables);
@@ -260,7 +291,38 @@ public class WikiPage {
 		
 		
 		System.out.println("\n***RDF triples for blank node***\n");
-		rdf.printOutRDFTripleBlankNode(matrixTables);}
+		rdf.printOutRDFTripleBlankNode(matrixTables);
+		
+		 
+		
+		}
+    }
+    
+    public void createJsonFile(Cell[][] matrix,JSONObject returnObj,int numtable) throws JSONException, IOException
+    {
+    	JSONObject tableJSON = new JSONObject();
+    
+    	ArrayList<Triple<String, String, String>> listTriple=null;
+		
+		ArrayList<String> headers = new ArrayList<String>();
+		
+		 listTriple = rdf.produceRDF(matrix);
+			rdf.cleanUpMatrix(matrix);
+			int numberColumns = matrix[0].length;
+			int numberRows = matrix.length;
+			headers = rdf.getHeaders(matrix);
+			numtable++;
+			tableJSON.put("title", "mama mia");
+			tableJSON.put("table#", "table id from wikipedia" );
+			tableJSON.put("# rows", numberRows);
+			tableJSON.put("# columns",numberColumns);
+			tableJSON.put("list of headers ",headers);
+			tableJSON.put("list of triples ",listTriple);
+			returnObj.put("table"+numtable, tableJSON);
+			
+			tableJSON = new JSONObject();
+			
+			
     }
     
 public int getCountColspan()
