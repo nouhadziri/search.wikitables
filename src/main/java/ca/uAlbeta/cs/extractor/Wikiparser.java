@@ -1,79 +1,59 @@
 package ca.uAlbeta.cs.extractor;
 
-
 import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
 import edu.jhu.nlp.wikipedia.WikiXMLSAXParser;
 
 public class Wikiparser implements PageCallbackHandler {
-	
-	public Wikiparser(){
-		
+
+	public Wikiparser() {
+
 	}
-	
-	
+
 	public void process(WikiPage page) {
-		if (page == null) return;
+		if (page == null)
+			return;
 		String title = page.getTitle().trim();
-		
+
 		try {
-			//ignore special pages, stub pages, redirect pages, and disambiguation pages.
-			if (page.isSpecialPage() ||
-				page.isStub() || 
-				page.isRedirect() ||
-				page.isDisambiguationPage())
-				
+			// ignore special pages, stub pages, redirect pages, and
+			// disambiguation pages.
+			if (page.isSpecialPage() || page.isStub() || page.isRedirect() || page.isDisambiguationPage())
+
 				return;
-			
-			//entity page.
+
+			// entity page.
 			String content = page.getText();
-			if ( title == null || title.isEmpty() || content == null || content.isEmpty() )
+			if (title == null || title.isEmpty() || content == null || content.isEmpty())
 				return;
-			
-		
+
 			String wkstrID = page.getID().trim();
-		//	System.out.println(wkstrID);
-			Long wikiID = Long.parseLong( wkstrID );
-			
-		//	System.out.println("Here is the title : "+page.getTitle());
-			
-			//System.out.println("Here is the infobox : "+page.getInfoBox());
-			
-			//System.out.println(page.getWikiText());
-		//	System.out.println("=============");
-			
-			//here I have to add page.parseTable where parseTable method will be on 
-		  // System.out.println(page.getWikiTable());
-		//	HashSet<String> tables=page.getWikiTable();
-		
-			
-			//page.getAllMatrix();
+			Long wikiID = Long.parseLong(wkstrID);
+
 			System.out.println("\n");
-			
-			System.out.println("***** Statistics about wiki ID: "+page.getID());
-			System.out.println("Title of the article : "+page.getTitle());
-			System.out.println("Number of tables  : "+page.getCountTable());
-			System.out.println("Number of tables having no header : "+ page.getCountHasNoHeader());
-			System.out.println("Number of tables having caption : "+ page.getCountCaption());
-			System.out.println("Number of tables having colspan attribute : "+page.getCountColspan());
-			System.out.println("Number of tables having rowspan attribute : "+page.getCountRowspan());
-			System.out.println("Number of tables having mix rowspan and colspan attribute : "+page.getCountMixRowandColumn());
-			System.out.println("Number of tables having nested tables : "+page.getCountNestedTable());
-			System.out.println("Number of tables having exception : "+page.getCountExceptions());
-			System.out.println("Number of tables having misuse of wikimarkup specification : "+page.getCountMisuseException());
-			
+
+			System.out.println("***** Statistics about wiki ID: " + page.getID());
+			System.out.println("Title of the article : " + page.getTitle());
+			System.out.println("Number of tables  : " + page.getCountTable());
+			System.out.println("Number of tables having no header : " + page.getCountHasNoHeader());
+			System.out.println("Number of tables having caption : " + page.getCountCaption());
+			System.out.println("Number of tables having colspan attribute : " + page.getCountColspan());
+			System.out.println("Number of tables having rowspan attribute : " + page.getCountRowspan());
+			System.out.println(
+					"Number of tables having mix rowspan and colspan attribute : " + page.getCountMixRowandColumn());
+			System.out.println("Number of tables having nested tables : " + page.getCountNestedTable());
+			System.out.println("Number of tables having exception : " + page.getCountExceptions());
+			System.out.println(
+					"Number of tables having misuse of wikimarkup specification : " + page.getCountMisuseException());
+
 			System.out.println("***** End Statistics***");
-			
+
 			page.getRDFTriples();
-			
-			
-		
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
 
 	public void indexWikipedia(String wikiFile) {
 
@@ -82,28 +62,19 @@ public class Wikiparser implements PageCallbackHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		System.out.println("DONE!!!!!!!1");
-	  
-		
+
 	}
-	
+
 	public static void main(String[] args) {
 		Wikiparser indexer = new Wikiparser();
 		try {
-			//indexer.indexWikipedia(args[0]);
 			indexer.indexWikipedia("/Users/nouhadziri/Desktop/test-2.xml");
-			//indexer.indexWikipedia("/Users/Nouha/Desktop/infobox.xml");
 		} catch (Exception e) {
-			
+
 			System.exit(1);
 		}
 	}
-
-
-	
-	
-	
-	
 
 }
