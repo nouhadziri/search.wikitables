@@ -31,7 +31,7 @@ public class WikiPage {
     private String title = null;
     private WikiTextParser wikiTextParser = null;
     private String id = null;
-
+    private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
     /**
      * Set the page title. This is not intended for direct use.
      *
@@ -70,7 +70,7 @@ public class WikiPage {
     
   
 
-    private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
+   
 
     /**
      * @return true if this a disambiguation page.
@@ -204,7 +204,7 @@ public class WikiPage {
 						}
 						System.out.print(wikimatrix[i][j].getContent() + " ");
 					} catch (java.lang.NullPointerException e) {
-						// System.out.print("");
+						
 					}
 				}
 
@@ -214,8 +214,99 @@ public class WikiPage {
 		}
 
     }
+    
 	public int numtable=0;
+	
+	public ArrayList<String> getMatrixRow(Cell[][] matrix,int i)
+	{
+		ArrayList<String> rows= new ArrayList<String>();
+		
+		for(int j=0;j<matrix[0].length;j++)
+		{
+			rows.add(matrix[i][j].getContent());
+		}
+		
+		
+		return rows;
+	}
+	
+	public void createJsonFromArticle() throws IOException,JSONException
+	{
+		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
 
+		matrixTables = wikiTextParser.getAllMatrixFromTables();
+		ArrayList<String> headers = new ArrayList<String>();
+		 		
+		if (matrixTables.isEmpty())
+		{
+			System.out.println("There is non well-formed table to produce RDF triples");
+		}
+		
+		else{
+			
+		File file = new File("/Users/nouhadziri/Desktop/toJsonNew.json");
+		Writer fileWriter1 = new FileWriter(file);
+    	JSONObject returnObj = new JSONObject();
+    	JSONObject tableJSON = new JSONObject();
+    	JSONObject wordShapeJson = new JSONObject();
+    	JSONObject dataTypeJson = new JSONObject();
+
+    	
+    	   	
+		int numberColumns = 0;
+		int numberRows = 0;
+		ArrayList<String> rows = new ArrayList<String>();
+	
+		for (Cell[][] matrix : matrixTables) {
+			
+			rdf.cleanUpMatrix(matrix);
+			
+			for (int j = 0; j < matrix[0].length; j++) {
+
+				wordShapeJson.put("column"+j, rdf.predicteColumnDataType(matrix, j));
+				dataTypeJson.put("column"+j, rdf.predicteColumnShape1(matrix, j));
+					
+			}
+			
+			for(int i=rdf.getIndexRowHeader(matrix)+1; i<matrix.length; i++)
+			{
+				for(int j=0; j<matrix[0].length;j++)
+				{
+					rows = getMatrixRow(matrix,i);
+				}
+				tableJSON.put("row"+i, rows );
+			}
+			
+				rdf.cleanUpMatrix(matrix);
+				
+				numberColumns = matrix[0].length;
+				numberRows = matrix.length;
+				headers = rdf.getHeaders(matrix);
+				numtable++;
+				tableJSON.put("word shape"+ numtable, wordShapeJson);
+				tableJSON.put("data type"+ numtable, dataTypeJson);
+				tableJSON.put("title", getTitle());
+				tableJSON.put("categories", getCategories());
+				tableJSON.put("table ID", getID());
+				tableJSON.put("# rows", numberRows);
+				tableJSON.put("# columns",numberColumns);
+				tableJSON.put("list of headers ",headers);
+				
+				
+				
+				
+				returnObj.put("table"+numtable, tableJSON);
+				
+				tableJSON = new JSONObject();
+				wordShapeJson = new JSONObject();
+		    	dataTypeJson = new JSONObject();
+		}
+		fileWriter1.write(returnObj.toString(4));
+
+	    fileWriter1.close();
+		}
+	}
+	
     public void getRDFTriples() throws IOException, JSONException
     {
     	ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
@@ -225,10 +316,9 @@ public class WikiPage {
 		if (matrixTables.isEmpty())
 		{
 			System.out.println("There is non well-formed table to produce RDF triples");
+			
 		}
 		else{
-			
-			//JSONObject returnObj = new JSONObject();
 			File file = new File("/Users/nouhadziri/Desktop/toJson.json");
 			Writer fileWriter = new FileWriter(file);
 	    	JSONObject returnObj = new JSONObject();
@@ -250,12 +340,15 @@ public class WikiPage {
 			rdf.cleanUpMatrix(matrix);
 	
 			System.out.println("\n***Word Shape & Data type***\n");
+			
+		
 		
 			for (int j = 0; j < matrix[0].length; j++) {
 
 				System.out.println("Data Type of column " + j + " : " + rdf.predicteColumnDataType(matrix, j));
 				System.out.println("Word Shape of column " + j + " : " + rdf.predicteColumnShape1(matrix, j));
 			}
+			
 			ArrayList<Triple<String, String, String>> listTriple=null;
 			
 			ArrayList<String> headers = new ArrayList<String>();

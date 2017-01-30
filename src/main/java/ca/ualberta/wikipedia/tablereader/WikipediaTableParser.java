@@ -21,6 +21,12 @@ public class WikipediaTableParser {
 	ArrayList<Table> tableswikipedia = new 	ArrayList<Table>();
 	
 	int numTable =0;
+	public boolean hasOnlyRowspan;
+	public boolean hasOnlyColspan;
+
+	public boolean hasNoHeader;
+	public boolean hasCaption;
+	public boolean hasMisuseException;
 	
 	public boolean hasRowspan;
 	public boolean hasColspan;
@@ -380,7 +386,7 @@ public class WikipediaTableParser {
 
 	/**
 	 * The good one ,Method that splits the row into cells and checks if there
-	 * is nested tables. the cells here are are separated by "||" we didn't
+	 * are nested tables. the cells here are are separated by "||" we didn't
 	 * parse each cell,this will be done by parseCell()
 	 * 
 	 * @param row
@@ -892,12 +898,7 @@ public class WikipediaTableParser {
 		return headers;
 	}
 	
-	public boolean hasOnlyRowspan;
-	public boolean hasOnlyColspan;
-
-	public boolean hasNoHeader;
-	public boolean hasCaption;
-	public boolean hasMisuseException;
+	
 
 	public Cell[][] parseTable(String table) {
 

@@ -1,5 +1,7 @@
 package ca.uAlbeta.cs.extractor;
 
+import java.util.HashSet;
+
 import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
 import edu.jhu.nlp.wikipedia.WikiXMLSAXParser;
@@ -28,8 +30,16 @@ public class Wikiparser implements PageCallbackHandler {
 				return;
 
 			String wkstrID = page.getID().trim();
+			
+			HashSet<String> categories = page.getCategories();
+			
+			for (String categorie : categories) {
+			    System.out.println("categorie: "+categorie );
+			}
+			
 			Long wikiID = Long.parseLong(wkstrID);
 
+			
 			System.out.println("\n");
 
 			System.out.println("***** Statistics about wiki ID: " + page.getID());
@@ -49,6 +59,7 @@ public class Wikiparser implements PageCallbackHandler {
 			System.out.println("***** End Statistics***");
 
 			page.getRDFTriples();
+			page.createJsonFromArticle();
 
 		} catch (Exception e) {
 			e.printStackTrace();

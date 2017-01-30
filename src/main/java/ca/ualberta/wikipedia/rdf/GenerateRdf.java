@@ -651,6 +651,7 @@ public class GenerateRdf {
 		if (i != -1) {
 			while (j < matrix[0].length) {
 				try {
+					
 					String cell2 = matrix[i][j + 1].getContent();
 
 					while (!(matrix[i][0].getContent().equals(cell2))) {
