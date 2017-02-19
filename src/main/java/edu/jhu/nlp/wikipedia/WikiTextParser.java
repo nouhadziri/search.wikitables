@@ -569,6 +569,7 @@ public class WikiTextParser {
 				}
 				break;
 			}
+			
 			// rowWithoutDelimiter because |- is causing problems so we want to
 			// know if there
 			// is normal row separated by /n|
@@ -1103,7 +1104,7 @@ public class WikiTextParser {
 				if (bracketCount == 0) {
 					String header = row.substring(startRow + 1, startPos);
 					headers.add(header);
-					startRow = startPos + 1; // I did a change here
+					startRow = startPos + 1; 
 				}
 				startPos++;
 				break;

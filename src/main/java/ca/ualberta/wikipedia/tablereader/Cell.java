@@ -7,6 +7,7 @@ public class Cell {
 	boolean hasException = false;
 	boolean hasMisuseException = false;
 	boolean cellHasRowspan =false;
+	boolean hasWikiLink =false;
 	
 
 
@@ -15,6 +16,7 @@ public class Cell {
 		this.type = type;
 		this.content = content;
 		this.cellHasRowspan = cellHasRowspan;
+		
 	}
 	
 	public Cell(String type, String content,boolean cellHasRowspan,boolean hasException) {
@@ -23,8 +25,17 @@ public class Cell {
 		this.content = content;
 		this.cellHasRowspan = cellHasRowspan;
 		this.hasException= hasException;
+		
 	}
 	
+	public boolean isHasWikiLink() {
+		return hasWikiLink;
+	}
+
+	public void setHasWikiLink(boolean hasWikiLink) {
+		this.hasWikiLink = hasWikiLink;
+	}
+
 	public Cell(String type, String content) {
 		super();
 		this.type = type;

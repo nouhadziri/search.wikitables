@@ -1,15 +1,23 @@
 package ca.uAlbeta.cs.extractor;
 
+import java.io.IOException;
 import java.util.HashSet;
 
+import ca.ualberta.elasticsearch.ElasticSearchManager;
 import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
 import edu.jhu.nlp.wikipedia.WikiXMLSAXParser;
 
 public class Wikiparser implements PageCallbackHandler {
-
-	public Wikiparser() {
-
+	
+//	File file;
+//	Writer fileWriter;
+	final ElasticSearchManager manager = new ElasticSearchManager();
+	
+	public Wikiparser() throws IOException {
+//	 file = new File("/Users/nouhadziri/Documents/winter2017/cmput605/wikiTables/toJsonNew.json");
+//	 fileWriter = new FileWriter(file);
+		manager.createSchema();
 	}
 
 	public void process(WikiPage page) {
@@ -56,10 +64,12 @@ public class Wikiparser implements PageCallbackHandler {
 			System.out.println(
 					"Number of tables having misuse of wikimarkup specification : " + page.getCountMisuseException());
 
-			System.out.println("***** End Statistics***");
+			System.out.println("*** End Statistics***");
 
-			page.getRDFTriples();
-			page.createJsonFromArticle();
+			//page.getRDFTriples();
+			manager.saveTables(page.createJsonFromArticle());
+			
+			System.out.println("wikilink: "+page.CheckWikid("[[Siobhán|  McCarthy]]"));
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -70,6 +80,8 @@ public class Wikiparser implements PageCallbackHandler {
 
 		try {
 			WikiXMLSAXParser.parseWikipediaDump(wikiFile, this);
+			manager.close();
+//			fileWriter.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -79,11 +91,12 @@ public class Wikiparser implements PageCallbackHandler {
 	}
 
 	public static void main(String[] args) {
-		Wikiparser indexer = new Wikiparser();
 		try {
+			Wikiparser indexer = new Wikiparser();
+			//indexer.indexWikipedia("/Users/nouhadziri/Desktop/enwiki-dump.xml");
 			indexer.indexWikipedia("/Users/nouhadziri/Desktop/test-2.xml");
 		} catch (Exception e) {
-
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
