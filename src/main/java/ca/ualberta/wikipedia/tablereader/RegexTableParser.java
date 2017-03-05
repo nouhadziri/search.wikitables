@@ -39,6 +39,15 @@ public class RegexTableParser {
 			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern refCleanupPattern = Pattern.compile("<ref(.*?)>.*?</ref>",
 			Pattern.MULTILINE | Pattern.DOTALL);
+	
+	private static Pattern brPattern = Pattern.compile("<br(.*?)/>",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern smallPattern = Pattern.compile("<small(.*?)>.*?</small>",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern supOpenPattern = Pattern.compile("<sup>",
+			Pattern.MULTILINE | Pattern.DOTALL);
+	private static Pattern supClosePattern = Pattern.compile("</sup>",
+			Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern spanCleanupPattern = Pattern.compile("<span(.*?)>", Pattern.MULTILINE | Pattern.DOTALL);
 	private static Pattern classCleanupPattern = Pattern.compile("\\bclass\\s*=\\s*\"(.*?)\"",
 			Pattern.MULTILINE | Pattern.DOTALL);
@@ -101,6 +110,8 @@ public class RegexTableParser {
 		}
 		return var;
 	}
+	
+	
 
 	public String regexRowspan(String rowspan) {
 		Pattern checkRegex = Pattern.compile("\\browspan\\s*=\\s*\"\\d+\"", Pattern.MULTILINE | Pattern.DOTALL);
@@ -185,6 +196,39 @@ public class RegexTableParser {
 
 		Matcher regexMatcher = classCleanupPattern.matcher(table);
 
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			} /*
+				 * else System.out.println("not found !"); }
+				 */
+		}
+		return table;
+
+	}
+	
+	
+	
+	public String regexSupOpenTag(String table) {
+
+		Matcher regexMatcher = supOpenPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			} /*
+				 * else System.out.println("not found !"); }
+				 */
+		}
+		return table;
+
+	}
+	
+	public String regexSupCloseTag(String table) {
+
+		Matcher regexMatcher = supClosePattern.matcher(table);
 		while (regexMatcher.find()) {
 			if (regexMatcher.group().length() != 0) {
 				table = regexMatcher.replaceAll("");
@@ -383,6 +427,40 @@ public class RegexTableParser {
 	public String regexRef(String table) {
 
 		Matcher regexMatcher = refCleanupPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
+
+		return table;
+
+	}
+	
+
+	public String regexBrTag(String table) {
+
+		Matcher regexMatcher = brPattern.matcher(table);
+
+		while (regexMatcher.find()) {
+			if (regexMatcher.group().length() != 0) {
+				table = regexMatcher.replaceAll("");
+
+			}
+		} /*
+			 * else System.out.println("not found !"); }
+			 */
+
+		return table;
+
+	}
+	public String regexSmallTag(String table) {
+
+		Matcher regexMatcher = smallPattern.matcher(table);
 
 		while (regexMatcher.find()) {
 			if (regexMatcher.group().length() != 0) {

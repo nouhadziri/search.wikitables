@@ -514,6 +514,8 @@ public class WikiTextParser {
 
 	public Cell[][] createMatrix(String table) {
 
+		
+		table = regexparser.regexRef(table);
 		table = regexparser.regexAttributeStyle(table);
 		table = regexparser.regexAttributeAlign(table);
 		table = regexparser.regexAttributeAlignWitoutQuotes(table);
@@ -525,6 +527,7 @@ public class WikiTextParser {
 		table = regexparser.regexAttributeBgcolor(table);
 		table = regexparser.regexAttributeClass(table);
 		table = regexparser.regexAttributeClassWithNoquotes(table);
+		
 
 		Pattern tooMuchSpace = Pattern.compile("\\s+\n");
 		Matcher matcher = tooMuchSpace.matcher(table);
@@ -878,7 +881,7 @@ public class WikiTextParser {
 	}
 
 	/**
-	 * method that returns true if the header's cells are splited by \n!
+	 * method that returns true if the header's cells are split by \n!
 	 * 
 	 * @param header
 	 * @return
@@ -1548,7 +1551,14 @@ public class WikiTextParser {
 		cellvalue = colspanCleanupPattern.matcher(cellvalue).replaceAll("");
 		cellvalue = colspanCleanupPattern2.matcher(cellvalue).replaceAll("");
 		cellvalue = regexparser.regexAttributeStyle(cellvalue);
+		cellvalue = regexparser.regexRef(cellvalue);
+		cellvalue = regexparser.regexSmallTag(cellvalue);
+		cellvalue = regexparser.regexBrTag(cellvalue);
+		cellvalue = regexparser.regexSupCloseTag(cellvalue);
+		cellvalue = regexparser.regexSupOpenTag(cellvalue);
+		
 
+		
 		int j = 0;
 		try {
 			while (table[i][j] != null) {
@@ -1602,6 +1612,10 @@ public class WikiTextParser {
 		boolean cellHasRowspan = false;
 
 		cellvalue = regexparser.regexAttributeStyle(cellvalue);
+		cellvalue = regexparser.regexRef(cellvalue);
+		cellvalue = regexparser.regexSmallTag(cellvalue);
+		cellvalue = regexparser.regexBrTag(cellvalue);
+		
 		int j = 0;
 		try {
 			while (table[i][j] != null) {

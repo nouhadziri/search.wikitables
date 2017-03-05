@@ -1,6 +1,9 @@
 package ca.uAlbeta.cs.extractor;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.HashSet;
 
 import ca.ualberta.elasticsearch.ElasticSearchManager;
@@ -10,13 +13,13 @@ import edu.jhu.nlp.wikipedia.WikiXMLSAXParser;
 
 public class Wikiparser implements PageCallbackHandler {
 	
-//	File file;
-//	Writer fileWriter;
+	File file;
+	Writer fileWriter;
 	final ElasticSearchManager manager = new ElasticSearchManager();
 	
 	public Wikiparser() throws IOException {
-//	 file = new File("/Users/nouhadziri/Documents/winter2017/cmput605/wikiTables/toJsonNew.json");
-//	 fileWriter = new FileWriter(file);
+	 file = new File("/Users/nouhadziri/Documents/winter2017/cmput605/wikiTables/toJsonNew.json");
+	 fileWriter = new FileWriter(file);
 		manager.createSchema();
 	}
 
@@ -67,7 +70,7 @@ public class Wikiparser implements PageCallbackHandler {
 			System.out.println("*** End Statistics***");
 
 			//page.getRDFTriples();
-			manager.saveTables(page.createJsonFromArticle());
+			manager.saveTables(page.createJsonFromArticle(fileWriter));
 			
 			System.out.println("wikilink: "+page.CheckWikid("[[Siobhán|  McCarthy]]"));
 
@@ -81,7 +84,7 @@ public class Wikiparser implements PageCallbackHandler {
 		try {
 			WikiXMLSAXParser.parseWikipediaDump(wikiFile, this);
 			manager.close();
-//			fileWriter.close();
+			fileWriter.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

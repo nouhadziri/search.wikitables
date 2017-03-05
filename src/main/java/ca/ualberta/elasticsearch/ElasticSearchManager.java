@@ -4,29 +4,31 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 public class ElasticSearchManager {
 
 	final TransportClient client;
 
-
 	public ElasticSearchManager() {
 		try {
 			client = new PreBuiltTransportClient(Settings.EMPTY)
-					.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9301));
+					.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
 		} catch (UnknownHostException e) {
 			throw new ExceptionInInitializerError("unable to connect to ElasticSearch: " + e.getMessage());
 		}
@@ -38,7 +40,7 @@ public class ElasticSearchManager {
 		if (existsResponse.isExists()) {
 			client.admin().indices().prepareDelete("wikipedia").execute().actionGet();
 		}
-		
+
 		client.admin().indices()
 		.prepareCreate("wikipedia")
 		.addMapping("wikitables", "{\n" +
@@ -85,7 +87,64 @@ public class ElasticSearchManager {
 				"		}\n" +
 				"	}\n" +
 				"}").execute().actionGet();
+		/*.addMapping("wikitables", "{\n" +
+				"	\"wikitables\": {\n" +
+				"		\"properties\": {\n" +
+				"			\"title\": {\n" +
+				"				\"type\": \"string\",\n" +
+				"				\"index\": \"analyzed\",\n" +
+				"				\"analyzer\": \"english\",\n" +
+				"				\"similarity\": \"BM25\"\n" +
+				"			},\n" +
+				"			\"article.id\": {\n" +
+				"				\"type\": \"integer\",\n" +
+				"				\"index\": \"not_analyzed\"\n" +
+				"			},\n" +
+				"			\"table.number\": {\n" +
+				"				\"type\": \"integer\",\n" +
+				"				\"index\": \"no\"\n" +
+				"			},\n" +
+				"			\"url\": {\n" +
+				"				\"type\": \"string\",\n" +
+				"				\"index\": \"no\"\n" +
+				"			},\n" +
+				"			\"categories\": {\n" +
+				"				\"type\": \"string\",\n" +
+				"				\"index\": \"analyzed\",\n" +
+				"				\"analyzer\": \"english\",\n" +
+				"				\"similarity\": \"BM25\"\n" +
+				"			},\n" +
+				"			\"headers\": {\n" +
+				"				\"type\": \"string\",\n" +
+				"				\"index\": \"analyzed\",\n" +
+				"				\"analyzer\": \"english\",\n" +
+				"				\"similarity\": \"BM25\"\n" +
+				"			},\n" +
+				"			\"content\": {\n" +
+				"				\"type\": \"nested\",\n" +
+				"				\"properties\": {\n" +
+				"					\"row.idx\": { \"type\": \"integer\" },\n" +
+				"					\"row.value\": {\n" +
+				"						\"type\": \"string\",\n" +
+				"						\"index\": \"analyzed\",\n" +
+				"						\"analyzer\": \"english\",\n" +
+				"						\"similarity\": \"BM25\"\n" +
+				"					}\n" +
+				"				}\n" +
+				"			}\n" +
+				"		}\n" +
+				"	}\n" +
+				"}").execute().actionGet();*/
 	}
+
+	// the english analyzer perform stemming,removing stop words, lowercase
+	// I'm not happy about the foxes --> i'm, happi, about, fox
+	// While the language analyzers can be used out of the box without any
+	// configuration,
+	// most of them do allow you to control aspects of their behavior,
+	// specifically: p354
+
+	// we can customize the behavior of the English analyzer
 
 	public void close() {
 		client.close();
@@ -106,24 +165,131 @@ public class ElasticSearchManager {
 			System.out.println("ERROR!");
 	}
 
-	public void getResponse(String query){
+	/**
+	 * search a keyword in one field
+	 * 
+	 * @param keyword
+	 */
+	public void getResponse(String keyword) {
 
-		SearchResponse scrollResp = client.prepareSearch("wikipedia")
-				.addSort(FieldSortBuilder.DOC_FIELD_NAME, SortOrder.ASC)
-				.setScroll(new TimeValue(60000))
-				.setQuery(QueryBuilders.matchQuery("headers", query))
-				.setSize(100).get(); //max of 100 hits will be returned for each scroll
-		//Scroll until no hits are returned
-		do {
-			for (SearchHit hit : scrollResp.getHits().getHits()) {
-				System.out.println(hit.getSourceAsString());
-			}
+		SearchResponse searchResponse = client.prepareSearch("wikipedia")
+				.setQuery(QueryBuilders.nestedQuery("content", QueryBuilders.matchQuery("content.row.value", keyword), ScoreMode.Avg)) // It's
+																							// a
+																							// BM25
+																							// scoring
+																							// model
+				.highlighter(new HighlightBuilder()
+						.field("headers").preTags("__").postTags("__")
+						.field("content.row.value").preTags("__").postTags("__")
+						.field("categories").preTags("__").postTags("__"))
+				// .setExplain(true)
+				.setSize(100).get(); // max of 100 hits will be returned for
+										// each scroll
 
-			scrollResp = client.prepareSearchScroll(scrollResp.getScrollId()).setScroll(new TimeValue(60000)).execute().actionGet();
-		} while(scrollResp.getHits().getHits().length != 0); // Zero hits mark the end of the scroll and the while loop.
+		// Scroll until no hits are returned
+		for (SearchHit hit : searchResponse.getHits().getHits()) {
+			// System.out.println("explanation:" + hit.getExplanation());
+			System.out.println("title: " + hit.getSource().get("title"));
+			System.out.println("url: " + hit.getSource().get("url"));
+			System.out.println("id: " + hit.getSource().get("article.id"));
+			System.out.println("table: " + hit.getSource().get("table.number"));
+			System.out.println("score: " + hit.getScore());
+			System.out.println(hit.getHighlightFields());
+			System.out.println("----------------------------");
+			// System.out.println(hit.getSourceAsString());
 
+		}
 
 	}
 
+	public void multiSearch(String phrasequery) {
+		String allField = "_all";
+		MultiMatchQueryBuilder mmqb = QueryBuilders.multiMatchQuery(phrasequery, allField);
+
+	}
+
+	// match a query
+
+	public void matchQuery() {
+
+	}
+
+	public void booleanQuery(String query) {
+
+	}
+	
+	public void advancedQuery(String category, String contains) {
+		final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+		
+//		if (Strings.hasText(category))
+			queryBuilder.must(QueryBuilders.matchQuery("categories", category));
+//		builders.add(QueryBuilders.matchQuery("category", category));
+
+//		if (Strings.hasText(contains))
+			queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchQuery("content.row.value", contains), ScoreMode.Avg));
+			//queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("categories", category), ScoreMode.Avg));
+//			builders.add(QueryBuilders.matchQuery("headers", contains));
+		
+			
+			
+		SearchResponse searchResponse = client.prepareSearch("wikipedia")
+				.setQuery(queryBuilder)
+				.highlighter(new HighlightBuilder()
+						.field("headers").preTags("__").postTags("__")
+						.field("content.row.value").preTags("__").postTags("__")
+						.field("categories").preTags("__").postTags("__"))
+//				 .setExplain(true)
+				.setSize(20).get(); // max of 100 hits will be returned for
+										// each scroll
+
+		// Scroll until no hits are returned
+		for (SearchHit hit : searchResponse.getHits().getHits()) {
+//			 System.out.println("explanation:" + hit.getExplanation());
+			System.out.println("title: " + hit.getSource().get("title"));
+			System.out.println("url: " + hit.getSource().get("url"));
+			System.out.println("id: " + hit.getSource().get("article.id"));
+			System.out.println("table: " + hit.getSource().get("table.number"));
+			System.out.println("score: " + hit.getScore());
+			System.out.println(hit.getHighlightFields());
+			System.out.println("----------------------------");
+			// System.out.println(hit.getSourceAsString());
+
+		}
+		}
+	
+	
+	public void advancedSearchPhraseQuery(String category, String contains){
+		
+final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+		//queryBuilder.must(QueryBuilders.matchQuery("categories", category));
+			queryBuilder.must(QueryBuilders.matchPhraseQuery("categories", category));
+			queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("content.row.value", contains), ScoreMode.Avg));
+
+		SearchResponse searchResponse = client.prepareSearch("wikipedia")
+				.setQuery(queryBuilder)
+				.highlighter(new HighlightBuilder()
+						.field("headers").preTags("__").postTags("__")
+						.field("content.row.value").preTags("__").postTags("__")
+						.field("categories").preTags("__").postTags("__"))
+//				 .setExplain(true)
+				.setSize(20).get(); // max of 100 hits will be returned for
+										// each scroll
+
+		// Scroll until no hits are returned
+		for (SearchHit hit : searchResponse.getHits().getHits()) {
+//			 System.out.println("explanation:" + hit.getExplanation());
+			System.out.println("title: " + hit.getSource().get("title"));
+			System.out.println("url: " + hit.getSource().get("url"));
+			System.out.println("id: " + hit.getSource().get("article.id"));
+			System.out.println("table: " + hit.getSource().get("table.number"));
+			System.out.println("score: " + hit.getScore());
+			System.out.println(hit.getHighlightFields());
+			System.out.println("----------------------------");
+			// System.out.println(hit.getSourceAsString());
+
+		}
+	
+		
+	}
 
 }

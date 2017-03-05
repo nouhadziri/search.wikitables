@@ -323,7 +323,7 @@ public class WikiPage {
 
 	int counter = 0;
 
-	public List<String> createJsonFromArticle() throws IOException, JSONException {
+	public List<String> createJsonFromArticle(Writer fileWriter) throws IOException, JSONException {
 		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
 
 		matrixTables = wikiTextParser.getAllMatrixFromTables();
@@ -334,7 +334,11 @@ public class WikiPage {
 		if (matrixTables.isEmpty()) {
 			System.out.println("There is non well-formed table to produce RDF triples");
 		} else {
-
+			
+			JSONArray returnObj = new JSONArray();
+			
+			final String articleId = getID().trim();
+			
 			counter++;
 
 
@@ -378,21 +382,26 @@ public class WikiPage {
 				// tableJSON.put("Word shape"+ numtable, wordShapeJson);
 				// tableJSON.put("Data type"+ numtable, dataTypeJson);
 
-				// tableJSON.put("Number of rows", numberRows);
-				// tableJSON.put("Number of columns",numberColumns);
+				
 				tableJSON.put("headers", headers);
 				tableJSON.put("content", rowJSON);
 
-				String articleId = getID().trim();
+				
 				tableJSON.put("table.number", numtable);
 				tableJSON.put("article.id", articleId);
 				tableJSON.put("title", getTitle());
 				tableJSON.put("url", "https://en.wikipedia.org/wiki/" + regexReplaceWhiteSpace(getTitle()));
 				tableJSON.put("categories", getCategories());
-//				returnObj.put("Table" + numtable, tableJSON);
 				tables.add(tableJSON.toString(4));
+				
+				tableJSON.put("Number of rows", numberRows);
+				tableJSON.put("Number of columns",numberColumns);
+				returnObj.put(tableJSON);
 			}
 
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("tables" + articleId, returnObj);
+			fileWriter.write(jsonObject.toString(4));
 		}
 
 		return tables;
