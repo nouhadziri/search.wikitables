@@ -1,5 +1,7 @@
 package ca.ualberta.wikipedia.dbpedia;
 
+import java.util.ArrayList;
+
 import com.hp.hpl.jena.query.*;
 
 
@@ -28,11 +30,9 @@ public class DbpediaManager {
 			ResultSet results = qexec.execSelect();
 			while (results.hasNext()) {
 				QuerySolution soln = results.nextSolution();
-				//System.out.println(soln.get("type"));
-				//System.out.println(soln.get("redirect"));
+			
 				System.out.println(soln.get("abstract"));
 
-				//System.out.println(soln);
 			}
 		} finally {
 			qexec.close();
@@ -42,14 +42,14 @@ public class DbpediaManager {
 	
 	public static String getAbstractSparql(String pageTitle)
 	{
-		String pageAbstract="";;
+		String pageAbstract="";
 		String queryString = "PREFIX dbr: <http://dbpedia.org/resource/>\n" +
-				"PREFIX dbo: <http://dbpedia.org/ontology/>\n" +
-				"SELECT ?abstract"
-				+ " WHERE {" 
-				+ "dbr:"+ pageTitle + " dbo:abstract ?abstract . " +
-				"FILTER (lang(?abstract) = 'en') " +
-				"}";
+		"PREFIX dbo: <http://dbpedia.org/ontology/>\n" +
+		"SELECT ?abstract"
+		+ " WHERE {" 
+		+ "dbr:"+ pageTitle + " dbo:abstract ?abstract . " +
+		"FILTER (lang(?abstract) = 'en') " +
+		"}";
 		
 		Query query = QueryFactory.create(queryString);
 		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
@@ -58,12 +58,9 @@ public class DbpediaManager {
 			while (results.hasNext()) {
 				QuerySolution soln = results.nextSolution();
 				pageAbstract=soln.get("abstract").toString();
-				//System.out.println(soln.get("type"));
-				//System.out.println(soln.get("redirect"));
-				
+			
 				System.out.println(soln.get("abstract"));
 
-				//System.out.println(soln);
 			}
 		} finally {
 			qexec.close();
@@ -89,12 +86,9 @@ public class DbpediaManager {
 			while (results.hasNext()) {
 				QuerySolution soln = results.nextSolution();
 				typeCell=soln.get("type").toString();
-				//System.out.println(soln.get("type"));
-				//System.out.println(soln.get("redirect"));
-				
+		
 				System.out.println(soln.get("type"));
 
-				//System.out.println(soln);
 			}
 		} finally {
 			qexec.close();
@@ -102,8 +96,9 @@ public class DbpediaManager {
 		return typeCell;
 	}
 	
-	public static String getRedirectSparql(String wikid){
+	public static ArrayList<String> getRedirectSparql(String wikid){
 		
+		ArrayList<String> listRedirects = new ArrayList<String>();
 		String redirectPage= "";;
 		String queryString = "PREFIX dbr: <http://dbpedia.org/resource/>\n" +
 				"PREFIX dbo: <http://dbpedia.org/ontology/>"+
@@ -119,32 +114,61 @@ public class DbpediaManager {
 			while (results.hasNext()) {
 				QuerySolution soln = results.nextSolution();
 				redirectPage=soln.get("redirect").toString();
-				//System.out.println(soln.get("type"));
-				//System.out.println(soln.get("redirect"));
-				
-				System.out.println(soln.get("redirect"));
+				redirectPage = redirectPage.replaceAll("http://dbpedia.org/resource/", "");
+				redirectPage = redirectPage.replaceAll("_", " ");
+				listRedirects.add(redirectPage);
+				//System.out.println(redirectPage);
 
-				//System.out.println(soln);
 			}
 		} finally {
 			qexec.close();
 		}
 		
-		return redirectPage;
+		return listRedirects;
 	}
 	
-	
-	
-	
-	
+	public  ArrayList<String> getCategorySparql(String wikid){
+		
+		ArrayList<String> listCatecories = new ArrayList<String>();
+		String category= "";;
+		String queryString = "PREFIX dbr: <http://dbpedia.org/resource/>\n" +
+				"PREFIX dct: <http://purl.org/dc/terms/>"+
+				"SELECT ?category"
+				+ " WHERE {" +
+				"dbr:"+ wikid+" dct:subject ?category ."+
+				"}";
+
+		Query query = QueryFactory.create(queryString);
+		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+		try {
+			ResultSet results = qexec.execSelect();
+			while (results.hasNext()) {
+				QuerySolution soln = results.nextSolution();
+				category=soln.get("category").toString();
+				listCatecories.add(category);
+			
+				//System.out.println(soln.get("category"));
+			}
+		} finally {
+			qexec.close();
+		}
+		
+		return listCatecories;
+	}
 	
 	
 	public static void main(String[] arg)
 	{
-		//getAbstractSparql("Roger_Moore");
-		//getTypeSparql("Roger_Moore");
+		//String title="Mamma_Mia!";
+		 //title = title.replaceAll("\\!", "\\!");
+		 //System.out.println(title);
+		//getAbstractSparql("James_Bond");
+		
+		//getTypeSparql("James_Bond");
 		getRedirectSparql("Roger_Moore");
+	//getCategorySparql("James_Bond");
 		
 		//sparqlTest();
 	}
+	
 }

@@ -11,9 +11,9 @@ public class TestQuery {
 	ElasticSearchManager manager = new ElasticSearchManager();
 	
 	
-//	@Test
+	//@Test
 	public void testKeywordQuery(){
-		manager.getResponse("Norman Reynolds"); //match multiple keywords
+		manager.getResponse("western province of Canada"); //match multiple keywords
 		
 	}
 	
@@ -27,10 +27,28 @@ public class TestQuery {
 		manager.advancedQuery("tennis", "french");
 	}
 	
-	@Test
+	//@Test
 	public void testAdvancedSearchPhraseQuery(){
 		
 		manager.advancedSearchPhraseQuery("Tennis hall", "french open");
+	}
+	
+	@Test
+	public void testDis_maxQuery(){
+		
+		manager.Dis_maxQuery("western province of Canada");
+		
+	}
+	
+	//@Test
+	public void testadvancedSearchTitleAndBody(){
+		
+		manager.advancedSearchTitleAndBody("List of international tennis player "," Andre Agassi" );
+	}
+	
+	//@Test
+	public void testadvancedSearchQuery3(){
+		manager.advancedSearchQuery3("tennis", "Andre agassi", "score");
 	}
 	
 	@After

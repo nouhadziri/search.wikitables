@@ -1,14 +1,17 @@
 package edu.jhu.nlp.wikipedia;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ca.ualberta.wikipedia.dbpedia.DbpediaManager;
 import ca.ualberta.wikipedia.tablereader.Cell;
 import ca.ualberta.wikipedia.tablereader.CreateTables;
 import ca.ualberta.wikipedia.tablereader.HeaderException;
@@ -38,6 +41,8 @@ public class WikiTextParser {
 	private static Pattern stubPattern = Pattern.compile("\\-stub\\}\\}", Pattern.CASE_INSENSITIVE);
 	private static Pattern disambCatPattern = Pattern.compile("\\{\\{disambig\\}\\}", Pattern.CASE_INSENSITIVE);
 	private InfoBox infoBox = null;
+	
+	public DbpediaManager dbpediaManager = new  DbpediaManager();
 
 	public WikiTextParser(String wtext) {
 		wikiText = wtext;
@@ -1714,6 +1719,89 @@ public class WikiTextParser {
 		}
 
 		return table;
+	}
+	
+
+	public Cell[] readColumn(int j, Cell[][] matrix) {
+
+		int row = matrix.length;
+
+		Cell[] columnMatrix = new Cell[row];
+
+		for (int i = 0; i < matrix.length; i++) {
+			try {
+				Cell cell = new Cell(matrix[i][j].getType(), matrix[i][j].getContent(),
+						matrix[i][j].isCellHasRowspan());
+				columnMatrix[i] = cell;
+			} catch (ArrayIndexOutOfBoundsException e) {
+				System.out.println("it runs out of bounds: read column");
+			}
+
+		}
+
+		return columnMatrix;
+	}
+	
+	
+	public String[] typeLableColumn (Cell[][] wikitable, int j){
+		
+		Cell[] column = readColumn(j,wikitable);
+		int i=0;
+		if (wikitable[i][j].getContent() == "null") {
+			i++;
+
+		}
+		if ((wikitable[i][j].getType() == "header")) {
+			i++;
+		}
+		String[] tableDbpediaRdfType = new String[column.length - i];
+		for (int k = 0; k < column.length; k++) {
+			try {
+				String rdfType = dbpediaManager.getTypeSparql(column[i].getContent());
+				tableDbpediaRdfType[k] = rdfType;
+				i++;
+			} catch (ArrayIndexOutOfBoundsException e) {
+				break;
+			}
+		}
+		
+		return tableDbpediaRdfType;
+	}
+	
+	public int count(String[] sampled, String val) {
+		int count = 0;
+		for (int i = 0; i < sampled.length; i++) {
+			if (sampled[i].equals(val)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public ArrayList<String> predictLabelClass (Cell[][]matrix, int j)
+	{
+		ArrayList<String> listPredictionType = new ArrayList<String>();
+		String[] table = typeLableColumn(matrix, j);
+		Map<String, Integer> hm = new LinkedHashMap<String, Integer>();
+
+		for (int i = 0; i < table.length; i++) {
+			String val = table[i];
+			int count = count(table, val);
+			hm.put(val, count);
+		}
+
+		int maxValueInMap = (Collections.max(hm.values())); // This will return
+															// max value in the
+															// Hashmap
+		for (Entry<String, Integer> entry : hm.entrySet()) { // Itrate through
+																// hashmap
+			if (entry.getValue() == maxValueInMap) {
+				// System.out.println(entry.getKey()); // Print the key with max
+				// value
+				listPredictionType.add(entry.getKey());
+			}
+		}
+		return listPredictionType;
 	}
 
 	/**

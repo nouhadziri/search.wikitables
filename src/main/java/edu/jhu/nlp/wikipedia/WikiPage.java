@@ -20,6 +20,7 @@ import org.json.JSONObject;
 
 import ca.ualberta.wikipedia.rdf.Triple;
 import ca.ualberta.elasticsearch.ElasticSearchManager;
+import ca.ualberta.wikipedia.dbpedia.DbpediaManager;
 import ca.ualberta.wikipedia.rdf.GenerateRdf;
 import ca.ualberta.wikipedia.tablereader.Cell;
 
@@ -28,6 +29,10 @@ import ca.ualberta.wikipedia.tablereader.Cell;
  *
  * @author Delip Rao
  */
+
+
+
+
 public class WikiPage {
 
 	public GenerateRdf rdf = new GenerateRdf();
@@ -35,6 +40,8 @@ public class WikiPage {
 	private WikiTextParser wikiTextParser = null;
 	private String id = null;
 	private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
+	
+	public DbpediaManager dbpeidaManager = new DbpediaManager();
 
 	/**
 	 * Set the page title. This is not intended for direct use.
@@ -353,19 +360,19 @@ public class WikiPage {
 				JSONObject dataTypeJson = new JSONObject();
 
 				// rdf.cleanUpMatrix(matrix);
-				//
+				
 				numberColumns = matrix[0].length;
 				numberRows = matrix.length;
 				headers = rdf.getHeaders(matrix);
 				numtable++;
 
-//				tableJSON.put("wikiId", getWikidFromCell(matrix));
+				//tableJSON.put("wikiId", getWikidFromCell(matrix));
 				rdf.cleanUpMatrix(matrix);
-				for (int j = 0; j < matrix[0].length; j++) {
+			/*	for (int j = 0; j < matrix[0].length; j++) {
 
 					wordShapeJson.put("column" + j, rdf.predicteColumnDataType(matrix, j));
 					dataTypeJson.put("column" + j, rdf.predicteColumnShape1(matrix, j));
-				}
+				}*/
 
 				JSONArray rowJSON = new JSONArray();
 				for (int i = rdf.getIndexRowHeader(matrix) + 1; i < matrix.length; i++) {
@@ -383,15 +390,20 @@ public class WikiPage {
 				// tableJSON.put("Data type"+ numtable, dataTypeJson);
 
 				
+				
 				tableJSON.put("headers", headers);
 				tableJSON.put("content", rowJSON);
 
-				
+				String title= regexReplaceWhiteSpace(getTitle());
+				 title = title.replaceAll("/!", "");
+				 System.out.println(title);
 				tableJSON.put("table.number", numtable);
 				tableJSON.put("article.id", articleId);
 				tableJSON.put("title", getTitle());
 				tableJSON.put("url", "https://en.wikipedia.org/wiki/" + regexReplaceWhiteSpace(getTitle()));
 				tableJSON.put("categories", getCategories());
+				tableJSON.put("abstract",  dbpeidaManager.getAbstractSparql(regexReplaceWhiteSpace(getTitle())));
+				tableJSON.put("redirects",dbpeidaManager.getRedirectSparql(regexReplaceWhiteSpace(getTitle())));
 				tables.add(tableJSON.toString(4));
 				
 				tableJSON.put("Number of rows", numberRows);

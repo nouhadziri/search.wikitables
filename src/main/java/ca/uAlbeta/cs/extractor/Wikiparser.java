@@ -72,7 +72,7 @@ public class Wikiparser implements PageCallbackHandler {
 			//page.getRDFTriples();
 			manager.saveTables(page.createJsonFromArticle(fileWriter));
 			
-			System.out.println("wikilink: "+page.CheckWikid("[[Siobhán|  McCarthy]]"));
+			//System.out.println("wikilink: "+page.CheckWikid("[[Siobhán|  McCarthy]]"));
 
 		} catch (Exception e) {
 			e.printStackTrace();
