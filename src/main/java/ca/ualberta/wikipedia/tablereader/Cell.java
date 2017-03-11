@@ -1,5 +1,7 @@
 package ca.ualberta.wikipedia.tablereader;
 
+import java.util.ArrayList;
+
 public class Cell {
 	
 	String type = null;
@@ -7,9 +9,9 @@ public class Cell {
 	boolean hasException = false;
 	boolean hasMisuseException = false;
 	boolean cellHasRowspan =false;
-	boolean hasWikiLink =false;
 	
-
+	ArrayList<String> wikiLinks = null;
+	
 
 	public Cell(String type, String content,boolean cellHasRowspan) {
 		super();
@@ -28,14 +30,6 @@ public class Cell {
 		
 	}
 	
-	public boolean isHasWikiLink() {
-		return hasWikiLink;
-	}
-
-	public void setHasWikiLink(boolean hasWikiLink) {
-		this.hasWikiLink = hasWikiLink;
-	}
-
 	public Cell(String type, String content) {
 		super();
 		this.type = type;
@@ -83,5 +77,12 @@ public class Cell {
 	public void setHasException(boolean hasException) {
 		this.hasException = hasException;
 	}
-	
+
+	public ArrayList<String> getWikiLinks() {
+		return wikiLinks;
+	}
+
+	public void setWikiLinks(ArrayList<String> wikiLinks) {
+		this.wikiLinks = wikiLinks;
+	}
 }

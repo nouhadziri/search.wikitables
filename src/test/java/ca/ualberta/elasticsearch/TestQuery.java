@@ -12,31 +12,37 @@ public class TestQuery {
 	
 	
 	//@Test
-	public void testKeywordQuery(){
-		manager.getResponse("western province of Canada"); //match multiple keywords
+	public void testgetResponse(){
 		
+		manager.getResponse("tennis pl");
 	}
 	
+	//@Test
+	public void testKeywordQuery(){
+		//manager.getResponse("american football "); //match multiple keywords
+		manager.getResponse("list of Bond 007 movies");
+	}
 	//@Test
 	public void testMultiSearch(){
 		manager.getResponse("cast");
 	}
-	
+
 	//@Test
 	public void testAdvancedQuery() {
 		manager.advancedQuery("tennis", "french");
 	}
 	
+	
 	//@Test
 	public void testAdvancedSearchPhraseQuery(){
 		
-		manager.advancedSearchPhraseQuery("Tennis hall", "french open");
+		manager.advancedSearchPhraseQuery("International Tennis ", "Andrés Gómez");
 	}
 	
 	@Test
 	public void testDis_maxQuery(){
 		
-		manager.Dis_maxQuery("western province of Canada");
+		manager.Dis_maxQuery("list of Bond 007 movies");
 		
 	}
 	
@@ -48,7 +54,13 @@ public class TestQuery {
 	
 	//@Test
 	public void testadvancedSearchQuery3(){
-		manager.advancedSearchQuery3("tennis", "Andre agassi", "score");
+		manager.advancedSearchQuery3("novels", "James", "american actor");
+	}
+	
+	//@Test 
+	void testmultiMatchSearch(){
+		
+		manager.multiMatchSearch("alberta");
 	}
 	
 	@After

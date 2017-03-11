@@ -3,13 +3,20 @@ package edu.jhu.nlp.wikipedia;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -23,15 +30,14 @@ import ca.ualberta.elasticsearch.ElasticSearchManager;
 import ca.ualberta.wikipedia.dbpedia.DbpediaManager;
 import ca.ualberta.wikipedia.rdf.GenerateRdf;
 import ca.ualberta.wikipedia.tablereader.Cell;
+import edu.stanford.nlp.ling.HasWord;
+import edu.stanford.nlp.process.DocumentPreprocessor;
 
 /**
  * Data structures for a wikipedia page.
  *
  * @author Delip Rao
  */
-
-
-
 
 public class WikiPage {
 
@@ -40,7 +46,7 @@ public class WikiPage {
 	private WikiTextParser wikiTextParser = null;
 	private String id = null;
 	private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
-	
+
 	public DbpediaManager dbpeidaManager = new DbpediaManager();
 
 	/**
@@ -224,22 +230,6 @@ public class WikiPage {
 		return rows;
 	}
 
-	/**
-	 * check if the cell has a wikilink : good
-	 */
-
-	public boolean CheckWikid(String cell) {
-		Pattern catPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
-		Matcher matcher = catPattern.matcher(cell);
-		if (matcher.find()) {
-			return true;
-		}
-
-		else {
-			return false;
-		}
-	}
-
 	public String regexReplaceWhiteSpace(String subject) {
 		Pattern checkRegex = Pattern.compile("\\s+", Pattern.MULTILINE | Pattern.DOTALL);
 		Matcher regexMatcher = checkRegex.matcher(subject);
@@ -249,54 +239,6 @@ public class WikiPage {
 			}
 		}
 		return subject;
-	}
-
-	public ArrayList<String> parseLink(String cell) {
-		ArrayList<String> listLink = new ArrayList<String>();
-		String link = "";
-		Pattern catPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
-		Matcher matcher = catPattern.matcher(cell);
-		while (matcher.find()) {
-			String[] temp = matcher.group(1).split("\\|");
-			if (temp == null || temp.length == 0) {
-
-				listLink.add(regexReplaceWhiteSpace(cell));
-			}
-			if (temp.length == 2) {
-				link = temp[0];
-				listLink.add(regexReplaceWhiteSpace(link));
-
-			} else {
-				link = temp[0];
-				listLink.add(regexReplaceWhiteSpace(link));
-			}
-		}
-		return listLink;
-	}
-
-	/**
-	 * if the table does not have wikilinks in its cell, so we will have no
-	 * wikilinks
-	 * 
-	 * @param matrix
-	 * @return
-	 */
-
-	public ArrayList<ArrayList<String>> getWikidFromCell(Cell[][] matrix) {
-		ArrayList<ArrayList<String>> ListWikiId = new ArrayList<ArrayList<String>>();
-
-		for (int i = 0; i < matrix.length; i++) {
-			for (int j = 0; j < matrix[0].length; j++) {
-				if (!CheckWikid(matrix[i][j].getContent())) {
-					continue;
-				} else {
-
-					ListWikiId.add(parseLink(matrix[i][j].getContent()));
-				}
-			}
-		}
-
-		return ListWikiId;
 	}
 
 	/**
@@ -337,21 +279,19 @@ public class WikiPage {
 		ArrayList<String> headers = new ArrayList<String>();
 
 		ArrayList<String> tables = new ArrayList<>();
-		
+
 		if (matrixTables.isEmpty()) {
 			System.out.println("There is non well-formed table to produce RDF triples");
 		} else {
-			
-			JSONArray returnObj = new JSONArray();
-			
-			final String articleId = getID().trim();
-			
-			counter++;
 
+			JSONArray returnObj = new JSONArray();
+
+			final String articleId = getID().trim();
+
+			counter++;
 
 			int numberColumns = 0;
 			int numberRows = 0;
-			ArrayList<String> rows = new ArrayList<String>();
 
 			for (Cell[][] matrix : matrixTables) {
 
@@ -360,54 +300,61 @@ public class WikiPage {
 				JSONObject dataTypeJson = new JSONObject();
 
 				// rdf.cleanUpMatrix(matrix);
-				
+
 				numberColumns = matrix[0].length;
 				numberRows = matrix.length;
 				headers = rdf.getHeaders(matrix);
 				numtable++;
 
-				//tableJSON.put("wikiId", getWikidFromCell(matrix));
+				// tableJSON.put("wikiId", getWikidFromCell(matrix));
 				rdf.cleanUpMatrix(matrix);
-			/*	for (int j = 0; j < matrix[0].length; j++) {
-
-					wordShapeJson.put("column" + j, rdf.predicteColumnDataType(matrix, j));
-					dataTypeJson.put("column" + j, rdf.predicteColumnShape1(matrix, j));
-				}*/
+				/*
+				 * for (int j = 0; j < matrix[0].length; j++) {
+				 * 
+				 * wordShapeJson.put("column" + j,
+				 * rdf.predicteColumnDataType(matrix, j));
+				 * dataTypeJson.put("column" + j,
+				 * rdf.predicteColumnShape1(matrix, j)); }
+				 */
 
 				JSONArray rowJSON = new JSONArray();
 				for (int i = rdf.getIndexRowHeader(matrix) + 1; i < matrix.length; i++) {
-					for (int j = 0; j < matrix[0].length; j++) {
-						rows = getMatrixRow(matrix, i);
-					}
-					
+					ArrayList<String> rows = getMatrixRow(matrix, i);
+					ArrayList<String> rowAbstracts = getMatrixRowAbstract(matrix, i);
+					ArrayList<String> allPairRelationships = getAllPairRelationships(matrix, i);
+
 					final JSONObject row = new JSONObject();
 					row.put("row.idx", i);
 					row.put("row.value", rows);
+					row.put("row.abstract", rowAbstracts);
+					row.put("row.relationship", allPairRelationships);
 					rowJSON.put(row);
 				}
 
 				// tableJSON.put("Word shape"+ numtable, wordShapeJson);
 				// tableJSON.put("Data type"+ numtable, dataTypeJson);
 
-				
-				
 				tableJSON.put("headers", headers);
 				tableJSON.put("content", rowJSON);
 
-				String title= regexReplaceWhiteSpace(getTitle());
-				 title = title.replaceAll("/!", "");
-				 System.out.println(title);
+				String[] headerTypes = wikiTextParser.predictLabelClass(matrix);
+				tableJSON.put("headerTypes", Arrays.stream(headerTypes).collect(Collectors.toList()));
+
+				String title = regexReplaceWhiteSpace(getTitle());
+				title = title.replaceAll("/!", "");
+				System.out.println(title);
 				tableJSON.put("table.number", numtable);
 				tableJSON.put("article.id", articleId);
 				tableJSON.put("title", getTitle());
 				tableJSON.put("url", "https://en.wikipedia.org/wiki/" + regexReplaceWhiteSpace(getTitle()));
 				tableJSON.put("categories", getCategories());
-				tableJSON.put("abstract",  dbpeidaManager.getAbstractSparql(regexReplaceWhiteSpace(getTitle())));
-				tableJSON.put("redirects",dbpeidaManager.getRedirectSparql(regexReplaceWhiteSpace(getTitle())));
+				tableJSON.put("abstract", DbpediaManager.getAbstractSparql(regexReplaceWhiteSpace(getTitle())));
+				tableJSON.put("redirects", DbpediaManager.getRedirectSparql(regexReplaceWhiteSpace(getTitle())));
+
 				tables.add(tableJSON.toString(4));
-				
+
 				tableJSON.put("Number of rows", numberRows);
-				tableJSON.put("Number of columns",numberColumns);
+				tableJSON.put("Number of columns", numberColumns);
 				returnObj.put(tableJSON);
 			}
 
@@ -417,6 +364,66 @@ public class WikiPage {
 		}
 
 		return tables;
+	}
+
+	private ArrayList<String> getAllPairRelationships(Cell[][] matrix, int i) {
+		Map<Integer, Set<String>> wikiIdMap = new HashMap<>();
+		
+		for (int j = 0; j < matrix[i].length; j++) {
+			if (matrix[i][j].getWikiLinks() != null) {
+				wikiIdMap.put(j, 
+						matrix[i][j].getWikiLinks().stream()
+						.map(wikiId -> regexReplaceWhiteSpace(wikiId))
+						.collect(Collectors.toSet())
+						);
+			}
+		}
+		
+		Set<String> result = new TreeSet<>();
+		
+		ArrayList<Integer> wikiIdKeys = new ArrayList<>(wikiIdMap.keySet());
+		
+		for (int j = 0; j < wikiIdKeys.size(); j++) {
+			for (String candidateSubject : wikiIdMap.get(wikiIdKeys.get(j))) {
+				
+				for (int k = 0; k < wikiIdKeys.size(); k++) {
+					if (k == j)
+						continue;
+					
+					for (String candidateObject : wikiIdMap.get(wikiIdKeys.get(k))) {
+						String predicate = DbpediaManager.getPredicate(candidateSubject, candidateObject);
+						if (predicate != null)
+							result.add(String.format("%s %s %s", matrix[i][wikiIdKeys.get(j)].getContent(), predicate, matrix[i][wikiIdKeys.get(k)].getContent()));
+					}
+
+				}
+			}
+			
+		}
+		
+		return new ArrayList<>(result);
+	}
+	
+	private ArrayList<String> getMatrixRowAbstract(Cell[][] matrix, int i) {
+		Set<String> wikiIds = new HashSet<>();
+		for (int j = 0; j < matrix[i].length; j++) {
+			if (matrix[i][j].getWikiLinks() != null)
+				for (String wikiId : matrix[i][j].getWikiLinks()) {
+					wikiIds.add(regexReplaceWhiteSpace(wikiId));
+				}
+		}
+		
+		ArrayList<String> result = new ArrayList<String>();
+		for (String wikiId : wikiIds) {
+			String wholeAbstract = DbpediaManager.getAbstractSparql(wikiId);
+			if (wholeAbstract != null && !wholeAbstract.equals("")) {
+				DocumentPreprocessor dp = new DocumentPreprocessor(new StringReader(wholeAbstract));
+				List<HasWord> firstSentence = dp.iterator().next();
+				result.add(firstSentence.stream().map(HasWord::word).collect(Collectors.joining(" ")));
+			}
+		}
+
+		return result;
 	}
 
 	/**

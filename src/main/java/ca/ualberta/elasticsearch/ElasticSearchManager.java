@@ -10,12 +10,10 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.DisMaxQueryBuilder;
-import org.elasticsearch.index.query.MultiMatchQueryBuilder;
+import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -90,11 +88,26 @@ public class ElasticSearchManager {
 				"				\"index\": \"analyzed\",\n" +
 				"				\"analyzer\": \"english\"\n" +
 				"			},\n" +
+				"			\"headerTypes\": {\n" +
+				"				\"type\": \"string\",\n" +
+				"				\"index\": \"analyzed\",\n" +
+				"				\"analyzer\": \"english\"\n" +
+				"			},\n" +
 				"			\"content\": {\n" +
 				"				\"type\": \"nested\",\n" +
 				"				\"properties\": {\n" +
 				"					\"row.idx\": { \"type\": \"integer\" },\n" +
 				"					\"row.value\": {\n" +
+				"						\"type\": \"string\",\n" +
+				"						\"index\": \"analyzed\",\n" +
+				"						\"analyzer\": \"english\"\n" +
+				"					},\n" +
+				"					\"row.abstract\": {\n" +
+				"						\"type\": \"string\",\n" +
+				"						\"index\": \"analyzed\",\n" +
+				"						\"analyzer\": \"english\"\n" +
+				"					},\n" +
+				"					\"row.relationship\": {\n" +
 				"						\"type\": \"string\",\n" +
 				"						\"index\": \"analyzed\",\n" +
 				"						\"analyzer\": \"english\"\n" +
@@ -183,7 +196,7 @@ public class ElasticSearchManager {
 	}
 
 	/**
-	 * search a keyword in just one field
+	 * search a keyword in just one field:the content of the table: scoring vector space model
 	 * 
 	 * @param keyword
 	 */
@@ -191,15 +204,18 @@ public class ElasticSearchManager {
 
 		SearchResponse searchResponse = client.prepareSearch("wikipedia")
 				.setQuery(QueryBuilders.nestedQuery("content", QueryBuilders.matchQuery("content.row.value", keyword), ScoreMode.Avg)) // It's
-																							// a
-																							// BM25
-																							// scoring
-																							// model
+				.setQuery(QueryBuilders.matchQuery("title", keyword).boost(5).analyzer("english"))			
+				.setQuery(QueryBuilders.matchPhraseQuery("categories", keyword).analyzer("english"))
+				.setQuery(QueryBuilders.matchQuery("redirects", keyword).analyzer("english"))	
+				
+				
+				//.setQuery(QueryBuilders.matchQuery("redirects", keyword))
+				//.setQuery(QueryBuilders.matchQuery("abstract", keyword))
 				.highlighter(new HighlightBuilder()
 						.field("headers").preTags("__").postTags("__")
 						.field("content.row.value").preTags("__").postTags("__")
 						.field("categories").preTags("__").postTags("__"))
-				// .setExplain(true)
+						.setExplain(true)
 				.setSize(100).get(); // max of 100 hits will be returned for
 										// each scroll
 
@@ -221,10 +237,30 @@ public class ElasticSearchManager {
 
 	public void multiMatchSearch(String query) {
 		String allField = "_all";
-		MultiMatchQueryBuilder mmqb = QueryBuilders.multiMatchQuery(query, allField);
+		MatchPhraseQueryBuilder mmqb = QueryBuilders.matchPhraseQuery(query, "title");
+				
 		
+		SearchResponse searchResponse = client.prepareSearch("wikipedia")
+				.setQuery(mmqb)
+				.highlighter(new HighlightBuilder()
+						.field("abstract").preTags("__").postTags("__")
+						.field("title").preTags("__").postTags("__")
+						.field("categories").preTags("__").postTags("__")
+						.field("redirects").preTags("__").postTags("__"))
+						.setSize(20).get();
 		
+		for (SearchHit hit : searchResponse.getHits().getHits()) {
 
+			System.out.println("title: " + hit.getSource().get("title"));
+			System.out.println("url: " + hit.getSource().get("url"));
+			System.out.println("id: " + hit.getSource().get("article.id"));
+			System.out.println("table: " + hit.getSource().get("table.number"));
+			System.out.println("score: " + hit.getScore());
+			System.out.println(hit.getHighlightFields());
+			System.out.println("----------------------------");
+			
+
+		}
 	}
 
 	// match a query
@@ -239,14 +275,15 @@ public class ElasticSearchManager {
 	 * https://www.elastic.co/guide/en/elasticsearch/guide/current/_tuning_best_fields_queries.html
 	 * @param query
 	 */
+	
 	public void Dis_maxQuery(String query) {
 		
         QueryBuilder qb = null;
         // create the query
         qb = QueryBuilders.disMaxQuery()
                 .add(QueryBuilders.matchQuery("title", query))
-                .boost(1.2f)
-                .tieBreaker(0.3f)
+                .boost(10)
+                //.tieBreaker(0.3f)
                 .add(QueryBuilders.matchQuery("abstract", query))
                 .boost(2)
                 .add(QueryBuilders.nestedQuery("content", QueryBuilders.matchQuery("content.row.value", query), ScoreMode.Avg))
@@ -324,6 +361,9 @@ public class ElasticSearchManager {
 			queryBuilder.must(QueryBuilders.matchPhraseQuery("categories", category));
 			
 			queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("content.row.value", contains), ScoreMode.Avg));
+			queryBuilder.should(QueryBuilders.matchPhraseQuery("redirects", category));
+			queryBuilder.should(QueryBuilders.matchPhraseQuery("title", contains));
+			
 
 		SearchResponse searchResponse = client.prepareSearch("wikipedia")
 				.setQuery(queryBuilder)
@@ -349,7 +389,6 @@ public class ElasticSearchManager {
 
 		}
 	
-		
 	}
 	
 	/**
@@ -396,8 +435,10 @@ public class ElasticSearchManager {
 		
 		final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
 		//queryBuilder.must(QueryBuilders.matchQuery("categories", category));
-		queryBuilder.should(QueryBuilders.matchQuery("title", title));
+		queryBuilder.should(QueryBuilders.matchQuery("title", title))
+						.boost(3);
 		queryBuilder.should(QueryBuilders.matchQuery("Categories", title));
+		 			
 		queryBuilder.should(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("content.row.value", contains), ScoreMode.Avg));
 
 	SearchResponse searchResponse = client.prepareSearch("wikipedia")

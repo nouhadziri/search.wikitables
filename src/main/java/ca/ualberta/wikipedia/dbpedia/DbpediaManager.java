@@ -40,27 +40,45 @@ public class DbpediaManager {
 
 	}
 	
-	public static String getAbstractSparql(String pageTitle)
-	{
+	public static String getPredicate(String subject, String object) {
+		String predicate = null;
+		String queryString = "SELECT ?rel WHERE { <http://dbpedia.org/resource/" + subject + "> ?rel <http://dbpedia.org/resource/" + object + "> }";
+		
+		Query query = QueryFactory.create(queryString);
+		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://206.12.96.184:8890/sparql", query);
+		try {
+			ResultSet results = qexec.execSelect();
+			while (results.hasNext()) {
+				QuerySolution soln = results.nextSolution();
+				String relationship = soln.get("rel").toString();
+				
+				if (relationship.contains("dbpedia.org/ontology/") && !relationship.contains("wikiPageWikiLink") && !relationship.contains("wikiPageRedirects")) {
+					predicate = relationship.replaceAll("http://dbpedia.org/ontology/", "");
+				}
+			}
+		} finally {
+			qexec.close();
+		}
+		
+		return predicate;
+	}
+	
+	public static String getAbstractSparql(String pageTitle) {
 		String pageAbstract="";
-		String queryString = "PREFIX dbr: <http://dbpedia.org/resource/>\n" +
-		"PREFIX dbo: <http://dbpedia.org/ontology/>\n" +
+		String queryString = "PREFIX dbo: <http://dbpedia.org/ontology/>\n" +
 		"SELECT ?abstract"
 		+ " WHERE {" 
-		+ "dbr:"+ pageTitle + " dbo:abstract ?abstract . " +
+		+ "<http://dbpedia.org/resource/"+ pageTitle + "> dbo:abstract ?abstract . " +
 		"FILTER (lang(?abstract) = 'en') " +
 		"}";
 		
 		Query query = QueryFactory.create(queryString);
-		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://206.12.96.184:8890/sparql", query);
 		try {
 			ResultSet results = qexec.execSelect();
 			while (results.hasNext()) {
 				QuerySolution soln = results.nextSolution();
 				pageAbstract=soln.get("abstract").toString();
-			
-				System.out.println(soln.get("abstract"));
-
 			}
 		} finally {
 			qexec.close();
@@ -68,47 +86,54 @@ public class DbpediaManager {
 		return pageAbstract;
 	}
 	
-	public static String getTypeSparql(String wikid)
-	{
-		String typeCell="";;
-		String queryString = "PREFIX dbr: <http://dbpedia.org/resource/>\n" +
-				"PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>"+
+	public static String getTypeSparql(String wikiId) {
+		String ontology = null, schema = null;
+		
+		String queryString = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>"+
 				"SELECT ?type"
 				+ " WHERE {" +
-				" dbr:"+ wikid+ " rdf:type ?type ." +
-				"FILTER( REGEX(STR(?type), \"schema.org\") )"+
+				" <http://dbpedia.org/resource/"+ wikiId.replaceAll("\\s+", "_") + "> rdf:type ?type ." +
+				"FILTER( REGEX(STR(?type), \"schema.org\") || REGEX(STR(?type), \"dbpedia.org/ontology\"))"+
 				"}";
-
+		
 		Query query = QueryFactory.create(queryString);
-		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://206.12.96.184:8890/sparql", query);
 		try {
 			ResultSet results = qexec.execSelect();
+
 			while (results.hasNext()) {
 				QuerySolution soln = results.nextSolution();
-				typeCell=soln.get("type").toString();
+				String typeCell=soln.get("type").toString();
+				
+				if (typeCell.contains("dbpedia.org/ontology/"))
+					ontology = typeCell.replaceAll("http://dbpedia.org/ontology/", "");
+				else if (typeCell.contains("schema.org/"))
+					schema = typeCell.replaceAll("http://schema.org/", "");
+				
 		
-				System.out.println(soln.get("type"));
+
 
 			}
 		} finally {
 			qexec.close();
 		}
-		return typeCell;
+		
+	
+		return schema != null ? schema : ontology;
 	}
 	
 	public static ArrayList<String> getRedirectSparql(String wikid){
 		
 		ArrayList<String> listRedirects = new ArrayList<String>();
 		String redirectPage= "";;
-		String queryString = "PREFIX dbr: <http://dbpedia.org/resource/>\n" +
-				"PREFIX dbo: <http://dbpedia.org/ontology/>"+
+		String queryString = "PREFIX dbo: <http://dbpedia.org/ontology/>"+
 				"SELECT ?redirect"
 				+ " WHERE {" +
-				"?redirect dbo:wikiPageRedirects dbr:"+wikid+" ."+
+				"?redirect dbo:wikiPageRedirects <http://dbpedia.org/resource/"+wikid+"> ."+
 				"}";
 
 		Query query = QueryFactory.create(queryString);
-		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://206.12.96.184:8890/sparql", query);
 		try {
 			ResultSet results = qexec.execSelect();
 			while (results.hasNext()) {
@@ -139,7 +164,7 @@ public class DbpediaManager {
 				"}";
 
 		Query query = QueryFactory.create(queryString);
-		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://dbpedia.org/sparql", query);
+		QueryExecution qexec = QueryExecutionFactory.sparqlService("http://206.12.96.184:8890/sparql", query);
 		try {
 			ResultSet results = qexec.execSelect();
 			while (results.hasNext()) {
@@ -162,10 +187,12 @@ public class DbpediaManager {
 		//String title="Mamma_Mia!";
 		 //title = title.replaceAll("\\!", "\\!");
 		 //System.out.println(title);
-		//getAbstractSparql("James_Bond");
+		System.out.println(getAbstractSparql("Curtains_(musical)"));
+		System.out.println(getAbstractSparql("Bellingham,_Washington"));
+		System.out.println(getAbstractSparql("AFI's_100_Years...100_Movies_(10th_Anniversary_Edition)"));
 		
 		//getTypeSparql("James_Bond");
-		getRedirectSparql("Roger_Moore");
+//		getRedirectSparql("Roger_Moore");
 	//getCategorySparql("James_Bond");
 		
 		//sparqlTest();

@@ -1,10 +1,12 @@
 package edu.jhu.nlp.wikipedia;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.Map.Entry;
@@ -1336,7 +1338,7 @@ public class WikiTextParser {
 			System.out.println("*******");
 
 			numTable++;
-			if (!hasException) {
+			if (!hasException && !hasNoHeader) {
 				wellformedMatrixTables.add(matrix);
 			} else {
 				nonWellformedMatrixTables.add(matrix);
@@ -1743,64 +1745,72 @@ public class WikiTextParser {
 	}
 	
 	
-	public String[] typeLableColumn (Cell[][] wikitable, int j){
+	public ArrayList<String> typeLableColumn (Cell[] column){
+		ArrayList<String> tableDbpediaRdfType = new ArrayList<String>();
 		
-		Cell[] column = readColumn(j,wikitable);
-		int i=0;
-		if (wikitable[i][j].getContent() == "null") {
-			i++;
-
-		}
-		if ((wikitable[i][j].getType() == "header")) {
-			i++;
-		}
-		String[] tableDbpediaRdfType = new String[column.length - i];
-		for (int k = 0; k < column.length; k++) {
-			try {
-				String rdfType = dbpediaManager.getTypeSparql(column[i].getContent());
-				tableDbpediaRdfType[k] = rdfType;
-				i++;
-			} catch (ArrayIndexOutOfBoundsException e) {
-				break;
+		for (Cell element : column) {
+			if (element.getContent().equals("null") || element.getType().equals("header")) {
+				continue;
 			}
+			
+			if (element.getWikiLinks() == null || element.getWikiLinks().isEmpty())
+				continue;
+			
+			Map<String, Integer> hm = new LinkedHashMap<String, Integer>();
+			
+			String candidateLabel = "";
+			int candidateFreq = Integer.MIN_VALUE;
+			for (String wikiId : element.getWikiLinks()) {
+				String rdfType = DbpediaManager.getTypeSparql(wikiId);
+				if (rdfType != null) {
+					final int count = hm.getOrDefault(rdfType, 0)+1;
+					
+					hm.put(rdfType, count);
+					
+					if (count > candidateFreq) {
+						candidateFreq = count;
+						candidateLabel = rdfType;
+					}
+				}
+			}
+			
+			if (candidateLabel != null)
+				tableDbpediaRdfType.add(candidateLabel);
 		}
 		
 		return tableDbpediaRdfType;
 	}
-	
-	public int count(String[] sampled, String val) {
-		int count = 0;
-		for (int i = 0; i < sampled.length; i++) {
-			if (sampled[i].equals(val)) {
-				count++;
+
+	public String[] predictLabelClass(Cell[][] matrix) {
+		final String[] listPredictionType = new String[matrix[0].length];
+		
+		for (int j=0;j<matrix[0].length;j++){
+			Cell[] column = new Cell[matrix.length];
+			
+			for (int i = 0; i < matrix.length; i++) {
+				column[i] = matrix[i][j];
 			}
-		}
-		return count;
-	}
-
-	public ArrayList<String> predictLabelClass (Cell[][]matrix, int j)
-	{
-		ArrayList<String> listPredictionType = new ArrayList<String>();
-		String[] table = typeLableColumn(matrix, j);
-		Map<String, Integer> hm = new LinkedHashMap<String, Integer>();
-
-		for (int i = 0; i < table.length; i++) {
-			String val = table[i];
-			int count = count(table, val);
-			hm.put(val, count);
-		}
-
-		int maxValueInMap = (Collections.max(hm.values())); // This will return
-															// max value in the
-															// Hashmap
-		for (Entry<String, Integer> entry : hm.entrySet()) { // Itrate through
-																// hashmap
-			if (entry.getValue() == maxValueInMap) {
-				// System.out.println(entry.getKey()); // Print the key with max
-				// value
-				listPredictionType.add(entry.getKey());
+			
+			ArrayList<String> table = typeLableColumn(column);
+			Map<String, Integer> hm = new LinkedHashMap<String, Integer>();
+			
+			String candidateLabel = "";
+			int candidateFreq = Integer.MIN_VALUE;
+			for (int i = 0; i < table.size(); i++) {
+				final String val = table.get(i);
+				final int count = hm.getOrDefault(val, 0)+1;
+				
+				hm.put(val, count);
+				
+				if (count > candidateFreq) {
+					candidateFreq = count;
+					candidateLabel = val;
+				}
 			}
+			
+			listPredictionType[j] = candidateLabel;
 		}
+		
 		return listPredictionType;
 	}
 

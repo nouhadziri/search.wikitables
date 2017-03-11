@@ -991,14 +991,17 @@ public class GenerateRdf {
 					varCell = ClassCleanupPatternWithNoQuotes.matcher(varCell).replaceAll("");
 					varCell = bgcolorPatternWithNoQuotes.matcher(varCell).replaceAll("");
 					varCell = parseFlag(varCell);
+					
+					matrix[i][j].setWikiLinks(parseWikiLinks(varCell));
+					
 					varCell = parseLinkCell(varCell);
 					varCell = parseCurlCell(varCell);
 					varCell = parseLinkCell1(varCell);
 					varCell = parseLinkCellAge(varCell);
 					varCell = varCell.trim();
-
+					
 					varCell = pipePattern.matcher(varCell).replaceAll("");
-
+					
 					matrix[i][j].setContent(varCell);
 				} catch (java.lang.NullPointerException e) {
 					// System.out.print("");
@@ -1006,6 +1009,29 @@ public class GenerateRdf {
 			}
 		}
 
+	}
+	
+	private ArrayList<String> parseWikiLinks(String cell) {
+		ArrayList<String> listLink = new ArrayList<String>();
+		String link = "";
+		Pattern catPattern = Pattern.compile("\\[\\[(.*?)\\]\\]", Pattern.MULTILINE);
+		Matcher matcher = catPattern.matcher(cell);
+		while (matcher.find()) {
+			String[] temp = matcher.group(1).split("\\|");
+			if (temp == null || temp.length == 0) {
+
+				listLink.add(regexReplaceWhiteSpace(cell));
+			}
+			if (temp.length == 2) {
+				link = temp[0];
+				listLink.add(regexReplaceWhiteSpace(link));
+
+			} else {
+				link = temp[0];
+				listLink.add(regexReplaceWhiteSpace(link));
+			}
+		}
+		return listLink;
 	}
 
 	public String removeLastChar(String s) {
