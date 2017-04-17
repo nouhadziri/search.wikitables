@@ -1,0 +1,66 @@
+<queries>
+    <query id="101" keyword="list of movies starring Sean Connery">
+        <result table="3" page="List of American films of 1979" />
+        <result table="1" page="James Bond" />
+        <result table="2" page="James Bond" />
+        <result table="1" page="List of American films of 1992" />
+        <result table="2" page="Jack Ryan (film series)" />
+        <result table="2" page="List of American films of 1966" />
+        <result table="4" page="List of American films of 1972" />
+        <result table="2" page="List of American films of 1979" />
+    </query>
+    <query id="102" keyword="musical movies tony award">
+        <result table="1" page="1776 (musical)" />
+        <result table="2" page="1776 (musical)" />
+        <result table="1" page="Kiss Me, Kate" />
+        <result table="2" page="Kiss Me, Kate" />
+        <result table="1" page="Guys and Dolls" />
+        <result table="2" page="Guys and Dolls" />
+        <result table="3" page="Guys and Dolls" />
+        <result table="5" page="Guys and Dolls" />
+        <result table="9" page="Guys and Dolls" />
+        <result table="4" page="Mamma Mia!" />
+        <result table="1" page="Big River (musical)" />
+        <result table="2" page="Blood Brothers (musical)" />
+        <result table="1" page="I Love My Wife" />
+        <result table="1" page="Curtains (musical)" />
+    </query>
+    <query id="103" keyword="grammy best album in 2012">
+        <result table="1" page="Grammy Award for Best Pop Vocal Album" />
+        <result table="1" page="Grammy Award for Best Rock Album" />
+    </query>
+    <query id="104" keyword="movies directed by Woody Allen">
+        <result table="3" page="List of American films of 1979" />
+        <result table="1" page="List of American films of 1992" />
+        <result table="4" page="List of American films of 1966" />
+        <result table="1" page="AFI's 100 Years...100 Movies (10th Anniversary Edition)" />
+        <result table="2" page="List of American films of 1972" />
+        <result table="1" page="List of people who have won multiple Academy Awards in a single year" />
+        <result table="1" page="List of oldest and youngest Academy Award winners and nominees" />
+    </query>
+    <query id="105" keyword="United states professional sports teams">
+        <result table="1" page="National Football League" />
+        <result table="8" page="Alabama" />
+    </query>
+    <query id="106" keyword="computer games developed by Ubisoft">
+        <result table="51" page="List of Game of the Year awards" />
+        <result table="43" page="List of Game of the Year awards" />
+    </query>
+    <query id="107" keyword="movies academy award nominations">
+        <result table="2" page="1993 in film" />
+        <result table="1" page="David Lynch" />
+        <result table="5" page="David Lynch" />
+        <result table="1" page="John Williams" />
+    </query>
+    <query id="108" keyword="movies starring Dustin Hoffman">
+        <result table="2" page="1993 in film" />
+        <result table="1" page="Kiss Me, Kate" />
+        <result table="2" page="Kiss Me, Kate" />
+        <result table="5" page="Guys and Dolls" />
+    </query>
+    <query id="109" keyword="concert tours england">
+        <result table="1" page="Bob Dylan England Tour 1965" />
+        <result table="1" page="Black Holes and Revelations Tour" />
+        <result table="3" page="Black Holes and Revelations Tour" />
+    </query>
+</queries>

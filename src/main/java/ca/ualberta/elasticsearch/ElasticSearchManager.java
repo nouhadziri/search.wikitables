@@ -2,10 +2,15 @@ package ca.ualberta.elasticsearch;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import ca.ualberta.elasticsearch.index.ElasticIndex;
 import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -33,6 +38,27 @@ public class ElasticSearchManager {
 		}
 	}
 
+    public void createAllIndices() {
+        for (ElasticIndex elasticIndex : ElasticIndex.indices()) {
+            createSchema(elasticIndex);
+        }
+    }
+
+    private void createSchema(ElasticIndex elasticIndex) {
+        IndicesExistsResponse existsResponse = client.admin().indices().prepareExists(elasticIndex.getName()).execute().actionGet();
+
+        if (existsResponse.isExists()) {
+            client.admin().indices().prepareDelete(elasticIndex.getName()).execute().actionGet();
+        }
+
+        final CreateIndexRequestBuilder requestBuilder = client.admin().indices().prepareCreate(elasticIndex.getName());
+
+        if (!elasticIndex.getSettings().isEmpty())
+            requestBuilder.setSettings(elasticIndex.getSettings());
+
+        requestBuilder.addMapping(ElasticIndex.TYPE, elasticIndex.getMapping()).execute().actionGet();
+    }
+
 	public void createSchema() {
 		IndicesExistsResponse existsResponse = client.admin().indices().prepareExists("wikipedia").execute().actionGet();
 
@@ -56,11 +82,11 @@ public class ElasticSearchManager {
 				"								}\n"+
 				"							}\n"+
 				"			},\n" +
-				"			\"article.id\": {\n" +
+				"			\"articleId\": {\n" +
 				"				\"type\": \"integer\",\n" +
 				"				\"index\": \"not_analyzed\"\n" +
 				"			},\n" +
-				"			\"table.number\": {\n" +
+				"			\"tableIdx\": {\n" +
 				"				\"type\": \"integer\",\n" +
 				"				\"index\": \"no\"\n" +
 				"			},\n" +
@@ -93,21 +119,21 @@ public class ElasticSearchManager {
 				"				\"index\": \"analyzed\",\n" +
 				"				\"analyzer\": \"english\"\n" +
 				"			},\n" +
-				"			\"content\": {\n" +
+				"			\"contents\": {\n" +
 				"				\"type\": \"nested\",\n" +
 				"				\"properties\": {\n" +
-				"					\"row.idx\": { \"type\": \"integer\" },\n" +
-				"					\"row.value\": {\n" +
+				"					\"idx\": { \"type\": \"integer\" },\n" +
+				"					\"values\": {\n" +
 				"						\"type\": \"string\",\n" +
 				"						\"index\": \"analyzed\",\n" +
 				"						\"analyzer\": \"english\"\n" +
 				"					},\n" +
-				"					\"row.abstract\": {\n" +
+				"					\"abstracts\": {\n" +
 				"						\"type\": \"string\",\n" +
 				"						\"index\": \"analyzed\",\n" +
 				"						\"analyzer\": \"english\"\n" +
 				"					},\n" +
-				"					\"row.relationship\": {\n" +
+				"					\"relationships\": {\n" +
 				"						\"type\": \"string\",\n" +
 				"						\"index\": \"analyzed\",\n" +
 				"						\"analyzer\": \"english\"\n" +
@@ -180,6 +206,25 @@ public class ElasticSearchManager {
 		client.close();
 	}
 
+	public void saveDocumentsOnAllIndices(List<String> contents) {
+	    if (contents.isEmpty())
+	        return;
+
+        for (ElasticIndex elasticIndex : ElasticIndex.indices()) {
+            final BulkRequestBuilder bulkRequest = client.prepareBulk();
+
+            for (String content : contents) {
+                bulkRequest.add(client.prepareIndex(elasticIndex.getName(), ElasticIndex.TYPE).setSource(content));
+            }
+
+            BulkResponse responses = bulkRequest.get();
+            if (responses.hasFailures())
+                for (BulkItemResponse resp : responses) {
+                    System.err.println(String.format("[%s] {%s} %s", resp.getIndex(), resp.getId(), resp.getFailureMessage()));
+                }
+        }
+    }
+
 	public void saveTables(List<String> contents) {
 		if (contents.isEmpty())
 			return;
@@ -190,10 +235,12 @@ public class ElasticSearchManager {
 			bulkRequest.add(client.prepareIndex("wikipedia", "wikitables").setSource(content));
 		}
 
-		BulkResponse response = bulkRequest.get();
-		if (response.hasFailures())
-			System.out.println("ERROR!");
-	}
+		BulkResponse responses = bulkRequest.get();
+		if (responses.hasFailures())
+            for (BulkItemResponse resp : responses) {
+                System.err.println(String.format("[%s] {%s} %s", resp.getIndex(), resp.getId(), resp.getFailureMessage()));
+            }
+    }
 
 	/**
 	 * search a keyword in just one field:the content of the table: scoring vector space model
@@ -209,8 +256,8 @@ public class ElasticSearchManager {
 				.setQuery(QueryBuilders.matchQuery("redirects", keyword).analyzer("english"))	
 				
 				
-				//.setQuery(QueryBuilders.matchQuery("redirects", keyword))
-				//.setQuery(QueryBuilders.matchQuery("abstract", keyword))
+				//.setKeyword(QueryBuilders.matchQuery("redirects", keyword))
+				//.setKeyword(QueryBuilders.matchQuery("abstract", keyword))
 				.highlighter(new HighlightBuilder()
 						.field("headers").preTags("__").postTags("__")
 						.field("content.row.value").preTags("__").postTags("__")
@@ -235,7 +282,73 @@ public class ElasticSearchManager {
 
 	}
 
-	public void multiMatchSearch(String query) {
+	public List<SearchResult> keywordSearch(String keyword, ElasticIndex index, int maxSize) {
+        SearchResponse searchResponse = client.prepareSearch(index.getName())
+                .setQuery(QueryBuilders.nestedQuery("contents", QueryBuilders.matchQuery("contents.values", keyword), ScoreMode.Avg)) // It's
+                .setQuery(QueryBuilders.matchQuery("title", keyword).boost(5).analyzer("english"))
+                .setQuery(QueryBuilders.matchPhraseQuery("categories", keyword).analyzer("english"))
+                .setQuery(QueryBuilders.matchQuery("redirects", keyword).analyzer("english"))
+
+
+                //.setKeyword(QueryBuilders.matchQuery("redirects", keyword))
+                //.setKeyword(QueryBuilders.matchQuery("abstract", keyword))
+                .highlighter(new HighlightBuilder()
+                        .field("headers").preTags("__").postTags("__")
+                        .field("contents.values").preTags("__").postTags("__")
+                        .field("categories").preTags("__").postTags("__"))
+                .setSize(maxSize).get(); // max of 100 hits will be returned for
+        // each scroll
+
+        return buildSearchResults(searchResponse);
+    }
+
+    public List<SearchResult> categorySearch(String category, String keyword, ElasticIndex index, int maxSize) {
+        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+
+//		if (Strings.hasText(category))
+        queryBuilder.must(QueryBuilders.matchQuery("categories", category));
+//		builders.add(QueryBuilders.matchQuery("category", category));
+
+//		if (Strings.hasText(contains))
+        queryBuilder.must(QueryBuilders.nestedQuery("contents", QueryBuilders.matchQuery("contents.values", keyword), ScoreMode.Avg));
+        //queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("categories", category), ScoreMode.Avg));
+//			builders.add(QueryBuilders.matchQuery("headers", contains));
+
+
+        SearchResponse searchResponse = client.prepareSearch(index.getName())
+                .setQuery(queryBuilder)
+                .highlighter(new HighlightBuilder()
+                        .field("headers").preTags("__").postTags("__")
+                        .field("contents.values").preTags("__").postTags("__")
+                        .field("categories").preTags("__").postTags("__"))
+                .setSize(maxSize).get(); // max of 100 hits will be returned for
+
+        return buildSearchResults(searchResponse);
+    }
+
+    private List<SearchResult> buildSearchResults(SearchResponse searchResponse) {
+        List<SearchResult> searchResults = new ArrayList<>();
+        // Scroll until no hits are returned
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
+            // System.out.println("explanation:" + hit.getExplanation());
+            final Map<String, Object> source = hit.getSource();
+
+            searchResults.add(
+                    new SearchResult(
+                            source.get("title").toString(),
+                            source.get("url").toString(),
+                            source.get("articleId").toString(),
+                            Integer.valueOf(source.get("tableIdx").toString()),
+                            hit.getScore(),
+                            hit.getHighlightFields())
+            );
+
+        }
+
+        return searchResults;
+    }
+
+    public void multiMatchSearch(String query) {
 		String allField = "_all";
 		MatchPhraseQueryBuilder mmqb = QueryBuilders.matchPhraseQuery(query, "title");
 				
@@ -314,7 +427,7 @@ public class ElasticSearchManager {
 				
 	}
 	
-	public void advancedQuery(String category, String contains) {
+	public void  advancedQuery(String category, String contains) {
 		final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
 		
 //		if (Strings.hasText(category))
@@ -322,7 +435,7 @@ public class ElasticSearchManager {
 //		builders.add(QueryBuilders.matchQuery("category", category));
 			
 //		if (Strings.hasText(contains))
-			queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchQuery("content.row.value", contains), ScoreMode.Avg));
+			queryBuilder.must(QueryBuilders.nestedQuery("contents", QueryBuilders.matchQuery("contents.values", contains), ScoreMode.Avg));
 			//queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("categories", category), ScoreMode.Avg));
 //			builders.add(QueryBuilders.matchQuery("headers", contains));
 		
@@ -332,7 +445,7 @@ public class ElasticSearchManager {
 				.setQuery(queryBuilder)
 				.highlighter(new HighlightBuilder()
 						.field("headers").preTags("__").postTags("__")
-						.field("content.row.value").preTags("__").postTags("__")
+						.field("contents.values").preTags("__").postTags("__")
 						.field("categories").preTags("__").postTags("__"))
 //				 .setExplain(true)
 				.setSize(20).get(); // max of 100 hits will be returned for
@@ -393,7 +506,7 @@ public class ElasticSearchManager {
 	
 	/**
 	 * multi-keywords should match the title and the content of the table
-	 * @param category
+	 * @param title
 	 * @param contains
 	 */
 	

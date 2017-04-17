@@ -1,0 +1,22 @@
+<queries>
+    <query id="201" category="Sportspeople" keyword="tennis">
+        <result table="3" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1979" />
+    </query>
+    <query id="202" category="Broadway musicals" keyword="Grammy Award">
+        <result table="3" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1979" />
+    </query>
+    <query id="203" category="Top level football leagues" keyword="teams">
+        <result table="3" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1979" />
+    </query>
+    <query id="204" category="Golf tournaments" keyword="players">
+        <result table="3" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1979" />
+    </query>
+    <query id="205" category="metropolitan areas" keyword="sports clubs">
+        <result table="3" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1979" />
+    </query>
+</queries>

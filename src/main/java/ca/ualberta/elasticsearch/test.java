@@ -1,5 +1,7 @@
 package ca.ualberta.elasticsearch;
 
+import ca.ualberta.elasticsearch.index.ElasticIndex;
+
 public class test {
 
 	public static void main(String[] args) {
@@ -10,7 +12,7 @@ public class test {
 		
 		//testelas.advancedSearchTitleAndBody("tennis"," Andre");
 		//testelas.advancedQuery("tennis", "Andre");
-		testelas.multiMatchSearch("american football");
+//		testelas.multiMatchSearch(ElasticIndex.analyzed, "american football");
 	}
 
 }

@@ -1,37 +1,21 @@
 package edu.jhu.nlp.wikipedia;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
+import ca.ualberta.wikipedia.dbpedia.DbpediaManager;
+import ca.ualberta.wikipedia.rdf.GenerateRdf;
+import ca.ualberta.wikipedia.rdf.Triple;
+import ca.ualberta.wikipedia.tablereader.Cell;
+import edu.stanford.nlp.ling.HasWord;
+import edu.stanford.nlp.process.DocumentPreprocessor;
+import edu.stanford.nlp.process.PTBTokenizer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import ca.ualberta.wikipedia.rdf.Triple;
-import ca.ualberta.elasticsearch.ElasticSearchManager;
-import ca.ualberta.wikipedia.dbpedia.DbpediaManager;
-import ca.ualberta.wikipedia.rdf.GenerateRdf;
-import ca.ualberta.wikipedia.tablereader.Cell;
-import edu.stanford.nlp.ling.HasWord;
-import edu.stanford.nlp.process.DocumentPreprocessor;
+import java.io.*;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Data structures for a wikipedia page.
@@ -46,8 +30,7 @@ public class WikiPage {
 	private WikiTextParser wikiTextParser = null;
 	private String id = null;
 	private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
-
-	public DbpediaManager dbpeidaManager = new DbpediaManager();
+	private static final Pattern upperCasePattern = Pattern.compile("[A-Z]");
 
 	/**
 	 * Set the page title. This is not intended for direct use.
@@ -273,10 +256,7 @@ public class WikiPage {
 	int counter = 0;
 
 	public List<String> createJsonFromArticle(Writer fileWriter) throws IOException, JSONException {
-		ArrayList<Cell[][]> matrixTables = new ArrayList<Cell[][]>();
-
-		matrixTables = wikiTextParser.getAllMatrixFromTables();
-		ArrayList<String> headers = new ArrayList<String>();
+		ArrayList<Cell[][]> matrixTables = wikiTextParser.getAllMatrixFromTables();
 
 		ArrayList<String> tables = new ArrayList<>();
 
@@ -303,7 +283,7 @@ public class WikiPage {
 
 				numberColumns = matrix[0].length;
 				numberRows = matrix.length;
-				headers = rdf.getHeaders(matrix);
+                ArrayList<String> headers = rdf.getHeaders(matrix);
 				numtable++;
 
 				// tableJSON.put("wikiId", getWikidFromCell(matrix));
@@ -324,10 +304,10 @@ public class WikiPage {
 					ArrayList<String> allPairRelationships = getAllPairRelationships(matrix, i);
 
 					final JSONObject row = new JSONObject();
-					row.put("row.idx", i);
-					row.put("row.value", rows);
-					row.put("row.abstract", rowAbstracts);
-					row.put("row.relationship", allPairRelationships);
+					row.put("idx", i);
+					row.put("values", rows);
+					row.put("abstracts", rowAbstracts);
+					row.put("relationships", allPairRelationships);
 					rowJSON.put(row);
 				}
 
@@ -335,7 +315,7 @@ public class WikiPage {
 				// tableJSON.put("Data type"+ numtable, dataTypeJson);
 
 				tableJSON.put("headers", headers);
-				tableJSON.put("content", rowJSON);
+				tableJSON.put("contents", rowJSON);
 
 				String[] headerTypes = wikiTextParser.predictLabelClass(matrix);
 				tableJSON.put("headerTypes", Arrays.stream(headerTypes).collect(Collectors.toList()));
@@ -343,8 +323,8 @@ public class WikiPage {
 				String title = regexReplaceWhiteSpace(getTitle());
 				title = title.replaceAll("/!", "");
 				System.out.println(title);
-				tableJSON.put("table.number", numtable);
-				tableJSON.put("article.id", articleId);
+				tableJSON.put("tableIdx", numtable);
+				tableJSON.put("articleId", articleId);
 				tableJSON.put("title", getTitle());
 				tableJSON.put("url", "https://en.wikipedia.org/wiki/" + regexReplaceWhiteSpace(getTitle()));
 				tableJSON.put("categories", getCategories());
@@ -373,7 +353,7 @@ public class WikiPage {
 			if (matrix[i][j].getWikiLinks() != null) {
 				wikiIdMap.put(j, 
 						matrix[i][j].getWikiLinks().stream()
-						.map(wikiId -> regexReplaceWhiteSpace(wikiId))
+						.map(this::regexReplaceWhiteSpace)
 						.collect(Collectors.toSet())
 						);
 			}
@@ -385,22 +365,27 @@ public class WikiPage {
 		
 		for (int j = 0; j < wikiIdKeys.size(); j++) {
 			for (String candidateSubject : wikiIdMap.get(wikiIdKeys.get(j))) {
-				
-				for (int k = 0; k < wikiIdKeys.size(); k++) {
-					if (k == j)
-						continue;
-					
-					for (String candidateObject : wikiIdMap.get(wikiIdKeys.get(k))) {
-						String predicate = DbpediaManager.getPredicate(candidateSubject, candidateObject);
-						if (predicate != null)
-							result.add(String.format("%s %s %s", matrix[i][wikiIdKeys.get(j)].getContent(), predicate, matrix[i][wikiIdKeys.get(k)].getContent()));
-					}
 
-				}
+			    final int pivot = j;
+                final List<String> candidateObjects = wikiIdKeys.stream()
+                        .filter(k -> k != pivot)
+                        .flatMap(k -> wikiIdMap.get(k).stream())
+                        .collect(Collectors.toList());
+                candidateObjects.add(getTitle().replaceAll("\\s+", "_"));
+
+                final Map<String, Set<String>> predicates = DbpediaManager.getPredicates(candidateSubject, candidateObjects);
+
+                for (Map.Entry<String, Set<String>> predicateEntry : predicates.entrySet()) {
+					for (String foundPredicate : predicateEntry.getValue()) {
+						final String reformedPredicate = upperCasePattern.matcher(foundPredicate).replaceAll(" $0");
+						result.add(String.format("%s %s %s", candidateSubject.replaceAll("_", " "), reformedPredicate, predicateEntry.getKey().replaceAll("_", " ")));
+					}
+                }
+
 			}
 			
 		}
-		
+
 		return new ArrayList<>(result);
 	}
 	
@@ -418,6 +403,7 @@ public class WikiPage {
 			String wholeAbstract = DbpediaManager.getAbstractSparql(wikiId);
 			if (wholeAbstract != null && !wholeAbstract.equals("")) {
 				DocumentPreprocessor dp = new DocumentPreprocessor(new StringReader(wholeAbstract));
+				dp.setTokenizerFactory(PTBTokenizer.PTBTokenizerFactory.newCoreLabelTokenizerFactory("normalizeParentheses=false,normalizeOtherBrackets=false"));
 				List<HasWord> firstSentence = dp.iterator().next();
 				result.add(firstSentence.stream().map(HasWord::word).collect(Collectors.joining(" ")));
 			}
@@ -466,6 +452,7 @@ public class WikiPage {
 
 					System.out.println("Data Type of column " + j + " : " + rdf.predicteColumnDataType(matrix, j));
 					System.out.println("Word Shape of column " + j + " : " + rdf.predicteColumnShape1(matrix, j));
+					
 				}
 
 				ArrayList<Triple<String, String, String>> listTriple = null;
