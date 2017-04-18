@@ -1,5 +1,6 @@
 package ca.ualberta.elasticsearch;
 
+import ca.ualberta.benchmark.query.QueryResult;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 
 import java.util.Map;
@@ -14,7 +15,6 @@ public class SearchResult {
     private final int tableIndex;
     private final double score;
     private final Map<String, HighlightField> highlights;
-
 
     public SearchResult(String title, String url, String articleId, int tableIndex, double score, Map<String, HighlightField> highlights) {
         this.title = title;

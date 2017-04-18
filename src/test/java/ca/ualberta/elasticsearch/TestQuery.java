@@ -1,8 +1,10 @@
 package ca.ualberta.elasticsearch;
 
+import ca.ualberta.elasticsearch.index.AnalyzedElasticIndex;
 import ca.ualberta.elasticsearch.index.ElasticIndex;
 import org.junit.After;
 import org.junit.Test;
+import ca.ualberta.elasticsearch.index.ElasticIndex;
 
 
 
@@ -10,13 +12,14 @@ public class TestQuery {
 	
 	
 	private ElasticSearchManager manager = new ElasticSearchManager();
-	
-	
+	private ElasticIndex anlyzedIndex = new AnalyzedElasticIndex();
+
 	/**
 	 * This method test a keyword query on one field, using the OR ranked boolean model
 	 * A eviter
 	 */
-	@Test
+	//
+    @Test
 	public void testKeywordQuery(){
 		//manager.getResponse("american football "); //match multiple keywords
 //		manager.getResponse("list of Bond 007 movies");
@@ -24,8 +27,8 @@ public class TestQuery {
 		//manager.keywordQuery("Paul Brown Stadium location");
 		//manager.keywordQuery("Francesco");
         System.out.println("******* keyword query *******");
-//		manager.keywordQuery("sportspeople in tennis");
-//		manager.keywordQuery(ElasticIndex.analyzed, "Broadway musicals Grammy Award");
+		//manager.keywordQuery("sportspeople in tennis");
+		manager.keywordSearch("list of movies starring Sean Connery",ElasticIndex.analyzed,10 );
         System.out.println("*****************************");
 
 		//manager.keywordQuery("Disney movies");
@@ -35,10 +38,10 @@ public class TestQuery {
 	/**
 	 * tester Dimanche : marche mais pour certain query pas de resultat
 	 */
-	@Test
+	//@Test
 	public void testAdvancedQuery() {
-		
-		//manager.advancedQuery("american actor", "list of movies starring Sean Connery"); 
+		manager.advancedQuery(ElasticIndex.analyzed, "metropolitan areas", "sports clubs");
+	//	manager.advancedQuery("american actor", "list of movies starring Sean Connery");
 		//manager.advancedQuery("musical movies", "tony award"); 
 		//manager.advancedQuery("grammy", "best album in 2012"); 
 		//manager.advancedQuery("american movies", "directed by Woody Allen"); 
@@ -52,10 +55,10 @@ public class TestQuery {
        // manager.advancedQuery("movies", "best costume design");
       //  manager.advancedQuery("concert tours", "england");
       //  manager.advancedQuery("sport", "Francesco");
-		System.out.println("******* advanced query *******");
-		manager.advancedQuery("sportspeople", "tennis");
+		//System.out.println("******* advanced query *******");
+		//manager.advancedQuery("sportspeople", "tennis");
 //		manager.advancedQuery(ElasticIndex.analyzed, "Broadway musicals", "Grammy Award");
-        System.out.println("*****************************");
+        //System.out.println("*****************************");
 
 
 		

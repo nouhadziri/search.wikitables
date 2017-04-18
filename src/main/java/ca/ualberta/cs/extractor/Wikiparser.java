@@ -106,9 +106,9 @@ public class Wikiparser implements PageCallbackHandler {
 
     public static void main(String[] args) {
         try {
-            Wikiparser indexer = new Wikiparser(true);
-            indexer.indexWikipedia("data/pages.xml");
-//			indexer.indexWikipedia("data/additional_pages.xml");
+            Wikiparser indexer = new Wikiparser(false);
+           // indexer.indexWikipedia("data/pages.xml");
+			indexer.indexWikipedia("data/additional_pages.xml");
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

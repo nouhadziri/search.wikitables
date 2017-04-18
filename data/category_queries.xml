@@ -1,19 +1,54 @@
 <queries>
     <query id="201" category="Sportspeople" keyword="tennis">
-        <result table="3" page="List of American films of 1979" />
-        <result table="2" page="List of American films of 1979" />
+        <result table="2" page="Andre Agassi" />
+        <result table="3" page="Andre Agassi" />
+        <result table="4" page="Tennis at the 2012 Summer Olympics" />
+        <result table="5" page="Tennis at the 2012 Summer Olympics" />
+        <result table="6" page="Tennis at the 2012 Summer Olympics" />
+        <result table="8" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Tennis players with most titles in the Open Era" />
+        <result table="1" page="Jacques Brugnon" />
+        <result table="3" page="Jacques Brugnon" />
+
     </query>
     <query id="202" category="Broadway musicals" keyword="Grammy Award">
-        <result table="3" page="List of American films of 1979" />
-        <result table="2" page="List of American films of 1979" />
+        <result table="1" page="List of Grammy Award ceremony locations" />
+        <result table="5" page="John Williams" />
+        <result table="1" page="17th Annual Latin Grammy Awards" />
+        <result table="1" page="Grammy Award for Best Rock Album" />
+        <result table="1" page="Grammy Award for Best Pop Vocal Album" />
+        <result table="2" page="List of Grammy Award ceremony locations" />
+
     </query>
     <query id="203" category="Top level football leagues" keyword="teams">
-        <result table="3" page="List of American films of 1979" />
-        <result table="2" page="List of American films of 1979" />
+        <result table="8" page="Serie A" />
+        <result table="6" page="Serie A" />
+        <result table="2" page="Serie A" />
+        <result table="3" page="Serie A" />
+        <result table="7" page="Serie A" />
+        <result table="5" page="Serie A" />
+        <result table="4" page="Serie A" />
+        <result table="1" page="American Football Conference" />
+        <result table="2" page="American Football Conference" />
+        <result table="1" page="National Football League" />
+        <result table="4" page="List of Major League Soccer stadiums" />
+        <result table="9" page="List of Major League Soccer stadiums" />
+        <result table="2" page="List of Major League Soccer stadiums" />
+        <result table="6" page="List of Major League Soccer stadiums" />
+        <result table="5" page="List of Major League Soccer stadiums" />
+        <result table="1" page="List of Major League Soccer stadiums" />
+        <result table="4" page="2011 AFC Annual Awards" />
+        <result table="5" page="2011 AFC Annual Awards" />
+        <result table="1" page="2011 AFC Annual Awards" />
+        <result table="1" page="2011 MLS SuperDraft" />
+
+
+
+
     </query>
     <query id="204" category="Golf tournaments" keyword="players">
-        <result table="3" page="List of American films of 1979" />
-        <result table="2" page="List of American films of 1979" />
+        <result table="1" page="2011 Presidents Cup" />
+        <result table="2" page="2011 Presidents Cup" />
     </query>
     <query id="205" category="metropolitan areas" keyword="sports clubs">
         <result table="3" page="List of American films of 1979" />

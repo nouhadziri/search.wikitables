@@ -3,7 +3,7 @@
         <result table="3" page="List of American films of 1979" />
         <result table="1" page="James Bond" />
         <result table="2" page="James Bond" />
-        <result table="1" page="List of American films of 1992" />
+        <result table="2" page="List of American films of 1992" />
         <result table="2" page="Jack Ryan (film series)" />
         <result table="2" page="List of American films of 1966" />
         <result table="4" page="List of American films of 1972" />
@@ -41,26 +41,114 @@
     <query id="105" keyword="United states professional sports teams">
         <result table="1" page="National Football League" />
         <result table="8" page="Alabama" />
+        <result table="1" page="List of Major League Soccer stadiums" />
+        <result table="2" page="List of Major League Soccer stadiums" />
+        <result table="3" page="List of Major League Soccer stadiums" />
+        <result table="4" page="List of Major League Soccer stadiums" />
+        <result table="5" page="List of Major League Soccer stadiums" />
+        <result table="6" page="List of Major League Soccer stadiums" />
+        <result table="7" page="List of Major League Soccer stadiums" />
+        <result table="8" page="List of Major League Soccer stadiums" />
+        <result table="9" page="List of Major League Soccer stadiums" />
+        <result table="4" page="Greater Los Angeles Area" />
+        <result table="1" page="2010 NBA Playoffs" />
+        <result table="2" page="2010 NBA Playoffs" />
+        <result table="3" page="2010 NBA Playoffs" />
+        <result table="7" page="59th National Hockey League All-Star Game" />
+        <result table="10" page="59th National Hockey League All-Star Game" />
+        <result table="11" page="59th National Hockey League All-Star Game" />
+        <result table="9" page="59th National Hockey League All-Star Game" />
+        <result table="6" page="59th National Hockey League All-Star Game" />
+        <result table="1" page="59th National Hockey League All-Star Game" />
+        <result table="8" page="59th National Hockey League All-Star Game" />
+        <result table="3" page="59th National Hockey League All-Star Game" />
+        <result table="2" page="59th National Hockey League All-Star Game" />
+        <result table="1" page="2011 MLS SuperDraft" />
+        <result table="2" page="2011 MLS SuperDraft" />
+        <result table="3" page="2011 MLS SuperDraft" />
+        <result table="1" page="American Football Conference" />
+        <result table="1" page="2008 Major League Baseball All-Star Game" />
+        <result table="2" page="2008 Major League Baseball All-Star Game" />
+        <result table="3" page="2008 Major League Baseball All-Star Game" />
+        <result table="4" page="2008 Major League Baseball All-Star Game" />
+        <result table="5" page="2008 Major League Baseball All-Star Game" />
+        <result table="6" page="2008 Major League Baseball All-Star Game" />
+        <result table="7" page="2008 Major League Baseball All-Star Game" />
+        <result table="8" page="2008 Major League Baseball All-Star Game" />
+        <result table="9" page="2008 Major League Baseball All-Star Game" />
+        <result table="10" page="2008 Major League Baseball All-Star Game" />
+        <result table="1" page="Greater Houston" />
+
     </query>
     <query id="106" keyword="computer games developed by Ubisoft">
         <result table="51" page="List of Game of the Year awards" />
         <result table="43" page="List of Game of the Year awards" />
+        <result table="4" page="List of games using Scaleform" />
+        <result table="5" page="List of games using Scaleform" />
+        <result table="6" page="List of games using Scaleform" />
+
     </query>
     <query id="107" keyword="movies academy award nominations">
         <result table="2" page="1993 in film" />
         <result table="1" page="David Lynch" />
         <result table="5" page="David Lynch" />
         <result table="1" page="John Williams" />
+        <result table="1" page="List of American films of 1979:" />
+        <result table="2" page="List of American films of 1979:" />
+        <result table="3" page="List of American films of 1979:" />
+        <result table="4" page="List of American films of 1979:" />
+        <result table="1" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="24" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="1" page="List of American films of 1992" />
+        <result table="2" page="List of American films of 1992" />
+        <result table="6" page="List of American films of 1992" />
+        <result table="7" page="List of American films of 1992" />
+        <result table="8" page="List of American films of 1992" />
+        <result table="9" page="List of American films of 1992" />
+        <result table="2" page="Academy Award for Best Production Design" />
+        <result table="3" page="Academy Award for Best Production Design" />
+        <result table="4" page="Academy Award for Best Production Design" />
+        <result table="5" page="Academy Award for Best Production Design" />
+        <result table="6" page="Academy Award for Best Production Design" />
+        <result table="7" page="Academy Award for Best Production Design" />
+        <result table="8" page="Academy Award for Best Production Design" />
+        <result table="9" page="Academy Award for Best Production Design" />
+        <result table="10" page="Academy Award for Best Production Design" />
+        <result table="11" page="Academy Award for Best Production Design" />
+        <result table="12" page="Academy Award for Best Production Design" />
+        <result table="1" page="List of people who have won multiple Academy Awards in a single year" />
+        <result table="3" page="List of American films of 1939" />
+        <result table="4" page="List of American films of 1939" />
+        <result table="8" page="List of American films of 1939" />
+        <result table="10" page="List of American films of 1939" />
+        <result table="11" page="List of American films of 1939" />
+        <result table="2" page="List of American films of 1966" />
+        <result table="3" page="List of American films of 1966" />
+        <result table="4" page="List of American films of 1966" />
+        <result table="2" page="List of American films of 1972" />
+        <result table="3" page="List of American films of 1972" />
+        <result table="4" page="List of American films of 1972" />
+        <result table="1" page="James Cameron" />
+        <result table="1" page="1993 in film:" />
     </query>
     <query id="108" keyword="movies starring Dustin Hoffman">
-        <result table="2" page="1993 in film" />
-        <result table="1" page="Kiss Me, Kate" />
-        <result table="2" page="Kiss Me, Kate" />
-        <result table="5" page="Guys and Dolls" />
+        <result table="1" page="List of American films of 1979" />
+        <result table="3" page="List of American films of 1979" />
+        <result table="1" page="List of American films of 1992" />
+
     </query>
+
     <query id="109" keyword="concert tours england">
         <result table="1" page="Bob Dylan England Tour 1965" />
         <result table="1" page="Black Holes and Revelations Tour" />
         <result table="3" page="Black Holes and Revelations Tour" />
     </query>
+
+    <query id="110" keyword="movies nominee best costume design">
+        <result table="6" page="1993 in film" />
+        <result table="1" page="Kiss Me, Kate" />
+        <result table="2" page="Kiss Me, Kate" />
+        <result table="5" page="Guys and Dolls" />
+    </query>
+
 </queries>
