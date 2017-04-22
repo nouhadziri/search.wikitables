@@ -41,12 +41,6 @@
                             Table #${item.getTableIndex()} in <a class="btn-link" href="${item.getUrl()}">${item.getTitleForUI()}</a>
                         </p>
 
-                              <ul  class="list-group">
-                                <#list item.getCategories() as cat>
-                                    <li class="list-group-item">${cat}</li>
-                                </#list>
-                              </ul>
-
                         <table class="table table-striped table-bordered">
                             <#if item.getHeaders()?size gt 0>
                                 <thead>
