@@ -27,6 +27,9 @@ public interface SearchResultUtil {
                             source.get("articleId").toString(),
                             Integer.valueOf(source.get("tableIdx").toString()),
                             hit.getScore(),
+                            (List<String>) source.get("categories"),
+                            (List<String>) source.get("headers"),
+                            (List<Map<String, Object>>) source.get("contents"),
                             hit.getHighlightFields())
             );
 

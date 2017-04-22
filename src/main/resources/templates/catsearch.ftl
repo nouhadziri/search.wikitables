@@ -11,26 +11,23 @@
     <body>
         <div class="container">
 
-            <div class="container">
-                <ul class="nav nav-tabs" role="tablist">
-                    <li class="active"><a href="#">Keyword Search</a></li>
-                    <li><a href="/cinit">Category Search</a></li>
-                    <li><a href="/rinit">Relationship Search</a></li>
-                </ul>
-            </div>
+            <ul class="nav nav-tabs" role="tablist">
+                <li><a href="/sinit">Keyword Search</a></li>
+                <li class="active"><a href="#">Category Search</a></li>
+                <li><a href="/rinit">Relationship Search</a></li>
+            </ul>
 
            <#if errors?has_content>
                <p class="text-danger">${errors}</p>
            </#if>
 
-           <form class="form-inline" method="GET" action="/search">
+           <form class="form-inline" method="GET" action="/catsearch">
                <div class="input-group">
+                <input type="text" class="form-control" value="${category!}" name="c" placeholder="Category">
                 <input type="text" class="form-control" value="${query!}" name="q" placeholder="Enter a text to Search">
-                <div class="input-group-btn">
                     <button class="btn btn-default" type="submit">
                         <i class="glyphicon glyphicon-search"></i>
                     </button>
-                </div>
                </div>
            </form>
         </div>
@@ -43,6 +40,12 @@
                         <p>
                             Table #${item.getTableIndex()} in <a class="btn-link" href="${item.getUrl()}">${item.getTitleForUI()}</a>
                         </p>
+
+                              <ul  class="list-group">
+                                <#list item.getCategories() as cat>
+                                    <li class="list-group-item">${cat}</li>
+                                </#list>
+                              </ul>
 
                         <table class="table table-striped table-bordered">
                             <#if item.getHeaders()?size gt 0>
@@ -68,9 +71,9 @@
                 </#list>
                 <ul class="pager">
                     <#if previous?has_content>
-                        <li><a href="/search?q=${query}&_s=${previous}">Previous</a></li>
+                        <li><a href="/catsearch?q=${query}&c=${category}&_s=${previous}">Previous</a></li>
                     </#if>
-                    <li><a href="/search?q=${query}&_s=${next}">Next</a></li>
+                    <li><a href="/catsearch?q=${query}&c=${category}&_s=${next}">Next</a></li>
                   </ul>
             </div>
         </#if>

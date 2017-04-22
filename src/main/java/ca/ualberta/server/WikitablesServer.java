@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static spark.Spark.get;
-import static spark.Spark.halt;
+import static spark.Spark.*;
+
 
 /**
  * Created by nouhadziri on 2017-04-21.
@@ -23,13 +23,36 @@ import static spark.Spark.halt;
 public class WikitablesServer {
     public static void main(String[] args) {
         final Configuration configuration = new Configuration(Configuration.VERSION_2_3_26);
-        configuration.setClassForTemplateLoading(SearchResponse.class, "/");
-
-
+        configuration.setClassForTemplateLoading(SearchResult.class, "/");
+        staticFileLocation("/public");
 
         get("/", (req, res) -> {
             StringWriter writer = new StringWriter();
+            final Template template = configuration.getTemplate("templates/home.ftl");
+            Map<String, Object> params = new HashMap<>();
+            template.process(params, writer);
+            return writer;
+        });
+
+        get("/sinit", (req, res) -> {
+            StringWriter writer = new StringWriter();
             final Template template = configuration.getTemplate("templates/search.ftl");
+            Map<String, Object> params = new HashMap<>();
+            template.process(params, writer);
+            return writer;
+        });
+
+        get("/cinit", (req, res) -> {
+            StringWriter writer = new StringWriter();
+            final Template template = configuration.getTemplate("templates/catsearch.ftl");
+            Map<String, Object> params = new HashMap<>();
+            template.process(params, writer);
+            return writer;
+        });
+
+        get("/rinit", (req, res) -> {
+            StringWriter writer = new StringWriter();
+            final Template template = configuration.getTemplate("templates/relsearch.ftl");
             Map<String, Object> params = new HashMap<>();
             template.process(params, writer);
             return writer;
@@ -61,8 +84,13 @@ public class WikitablesServer {
                     params.put("errors", errors.stream().collect(Collectors.joining("\n")));
 
                 } else {
+                    params.put("query", keyword);
+                    params.put("next", from+10);
+                    if (from - 10 >= 0)
+                        params.put("previous", from-10);
+
                     try (final ElasticSearchManager elasticSearchManager = new ElasticSearchManager()) {
-                        final List<SearchResult> results = elasticSearchManager.keywordSearch(keyword, ElasticIndex.analyzed, from,10);
+                        final List<SearchResult> results = elasticSearchManager.keywordSearch(keyword, ElasticIndex.luceneScoring, from,10);
                         params.put("results", results);
                     }
                 }
@@ -82,6 +110,10 @@ public class WikitablesServer {
             final String category = req.queryParams("c");
             final String fromParam = req.queryParams("_s");
 
+            StringWriter writer = new StringWriter();
+            final Template template = configuration.getTemplate("templates/catsearch.ftl");
+            Map<String, Object> params = new HashMap<>();
+
             try {
                 List<String> errors = new ArrayList<>();
 
@@ -99,25 +131,40 @@ public class WikitablesServer {
                     }
 
                 res.status(200);
-                if (!errors.isEmpty())
-                    return SearchResponse.failed(errors);
+                if (!errors.isEmpty()) {
+                    params.put("errors", errors.stream().collect(Collectors.joining("\n")));
 
-                try (final ElasticSearchManager elasticSearchManager = new ElasticSearchManager()) {
-                    final List<SearchResult> results = elasticSearchManager.categorySearch(keyword, category, ElasticIndex.analyzed, from, 10);
-                    return SearchResponse.successful(results);
+                } else {
+                    params.put("query", keyword);
+                    params.put("category", category);
+                    params.put("next", from+10);
+                    if (from - 10 >= 0)
+                        params.put("previous", from-10);
+
+                    try (final ElasticSearchManager elasticSearchManager = new ElasticSearchManager()) {
+                        final List<SearchResult> results = elasticSearchManager.categorySearch(category, keyword, ElasticIndex.analyzed, from,10);
+                        params.put("results", results);
+                    }
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
-                res.status(403);
-                return SearchResponse.failed("Oops! something went wrong, please try again!");
+                halt(500);
+                params.put("errors", "Ah! something went wrong, please try again.");
             }
+
+            template.process(params, writer);
+            return writer;
         });
 
         get("/relsearch", (req, res) -> {
             final String keyword = req.queryParams("q");
             final String relation = req.queryParams("r");
             final String fromParam = req.queryParams("_s");
+
+            StringWriter writer = new StringWriter();
+            final Template template = configuration.getTemplate("templates/relsearch.ftl");
+            Map<String, Object> params = new HashMap<>();
 
             try {
                 List<String> errors = new ArrayList<>();
@@ -126,7 +173,7 @@ public class WikitablesServer {
                     errors.add("no keyword is provided");
 
                 if (Strings.isNullOrEmpty(relation))
-                    errors.add("no relation is provided");
+                    errors.add("no relationship is provided");
 
                 int from = 0;
                 if (!Strings.isNullOrEmpty(fromParam))
@@ -136,19 +183,30 @@ public class WikitablesServer {
                     }
 
                 res.status(200);
-                if (!errors.isEmpty())
-                    return SearchResponse.failed(errors);
+                if (!errors.isEmpty()) {
+                    params.put("errors", errors.stream().collect(Collectors.joining("\n")));
 
-                try (final ElasticSearchManager elasticSearchManager = new ElasticSearchManager()) {
-                    final List<SearchResult> results = elasticSearchManager.relationSearch(keyword, relation, ElasticIndex.analyzed, from, 10);
-                    return SearchResponse.successful(results);
+                } else {
+                    params.put("query", keyword);
+                    params.put("relation", relation);
+                    params.put("next", from+10);
+                    if (from - 10 >= 0)
+                        params.put("previous", from-10);
+
+                    try (final ElasticSearchManager elasticSearchManager = new ElasticSearchManager()) {
+                        final List<SearchResult> results = elasticSearchManager.relationSearch(keyword, relation, ElasticIndex.analyzed, from,10);
+                        params.put("results", results);
+                    }
                 }
 
             } catch (Exception e) {
                 e.printStackTrace();
-                res.status(403);
-                return SearchResponse.failed("Oops! something went wrong, please try again!");
+                halt(500);
+                params.put("errors", "Ah! something went wrong, please try again.");
             }
+
+            template.process(params, writer);
+            return writer;
         });
     }
 }
