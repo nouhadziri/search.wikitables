@@ -25,7 +25,7 @@ public class Wikiparser implements PageCallbackHandler {
 
 
     public Wikiparser(boolean isCreateSchema) throws IOException {
-        File file = new File("/Users/nouhadziri/Documents/winter2017/cmput605/wikiTables/toJsonNew2.json");
+        File file = new File("toJsonNew.json");
         fileWriter = new FileWriter(file);
         if (isCreateSchema) {
             manager.createSchema();
@@ -86,7 +86,7 @@ public class Wikiparser implements PageCallbackHandler {
             //page.getRDFTriples();
 //			manager.saveDocumentsOnNonTokenizedIndex(page.createJsonFromArticle(fileWriter));
             final List<String> jsonArticle = page.createJsonFromArticle(fileWriter);
-            manager.saveTables(jsonArticle);
+//            manager.saveTables(jsonArticle);
             manager.saveDocumentsOnAllIndices(jsonArticle);
             numberOfTables.accept(page.numtable);
             numberOfColumns.accept(page.getNumberOfColumns());
@@ -105,8 +105,6 @@ public class Wikiparser implements PageCallbackHandler {
 
         try {
             WikiXMLSAXParser.parseWikipediaDump(wikiFile, this);
-            manager.close();
-            fileWriter.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,11 +120,17 @@ public class Wikiparser implements PageCallbackHandler {
 
     }
 
+    public void close() throws IOException {
+        manager.close();
+        fileWriter.close();
+    }
+
     public static void main(String[] args) {
         try {
-            Wikiparser indexer = new Wikiparser(false);
-//            indexer.indexWikipedia("data/pages.xml");
+            Wikiparser indexer = new Wikiparser(true);
+            indexer.indexWikipedia("data/pages.xml");
 			indexer.indexWikipedia("data/additional_pages.xml");
+			indexer.close();
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
