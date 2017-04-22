@@ -15,8 +15,8 @@ public class StopwordsIncludedElasticIndex implements ElasticIndex {
                 "   \"analysis\": {\n" +
                 "      \"analyzer\": {\n" +
                 "           \"stopwords_included_analyzer\": {\n" +
-                "               \"type\": \"standard\",\n" +
-                "               \"filter\" : [\"standard\", \"lowercase\", \"my_stemmer\"]" +
+                "               \"tokenizer\": \"standard\",\n" +
+                "               \"filter\" : [ \"lowercase\", \"my_stemmer\"]" +
                 "           }\n" +
                 "       },\n" +
                 "       \"filter\" : {\n" +

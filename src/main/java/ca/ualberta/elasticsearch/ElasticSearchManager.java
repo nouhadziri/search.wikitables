@@ -7,25 +7,25 @@ import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRespon
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MatchPhraseQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
+import java.io.Closeable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public class ElasticSearchManager {
+public class ElasticSearchManager implements Closeable {
 
     final TransportClient client;
 
@@ -44,7 +44,7 @@ public class ElasticSearchManager {
         }
     }
 
-    private void createSchema(ElasticIndex elasticIndex) {
+    void createSchema(ElasticIndex elasticIndex) {
         IndicesExistsResponse existsResponse = client.admin().indices().prepareExists(elasticIndex.getName()).execute().actionGet();
 
         if (existsResponse.isExists()) {
@@ -202,6 +202,7 @@ public class ElasticSearchManager {
 
     // we can customize the behavior of the English analyzer
 
+    @Override
     public void close() {
         client.close();
     }
@@ -225,6 +226,10 @@ public class ElasticSearchManager {
         }
     }
 
+    void saveDocument(XContentBuilder content, ElasticIndex index) {
+        client.prepareIndex(index.getName(), ElasticIndex.TYPE).setSource(content).get();
+    }
+
     public void saveTables(List<String> contents) {
         if (contents.isEmpty())
             return;
@@ -242,7 +247,102 @@ public class ElasticSearchManager {
             }
     }
 
+    SearchResponse submitSearchRequest(ElasticIndex index, int maxSize, QueryBuilder queryBuilder, HighlightBuilder highlightBuilder) {
+        final SearchRequestBuilder requestBuilder = client.prepareSearch(index.getName()).setQuery(queryBuilder);
+        if (highlightBuilder != null)
+            requestBuilder.highlighter(highlightBuilder);
+        if (maxSize > 0)
+            requestBuilder.setSize(maxSize);
+
+        return requestBuilder.get();
+    }
+
+    public List<SearchResult> keywordSearch(String keyword, ElasticIndex index, int from, int maxSize) {
+        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+
+        queryBuilder.should(QueryBuilders.matchQuery("headerTypes", keyword));
+        queryBuilder.should(QueryBuilders.matchQuery("headers", keyword));
+        queryBuilder.should(QueryBuilders.matchQuery("redirects", keyword));
+        queryBuilder.should(QueryBuilders.matchQuery("title", keyword));
+        queryBuilder.should(QueryBuilders.matchQuery("categories", keyword));
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.values", keyword), ScoreMode.Avg)).boost(3);
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.abstracts", keyword), ScoreMode.Avg));
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.relationships", keyword), ScoreMode.Avg));
+        queryBuilder.should(QueryBuilders.matchQuery("abstract", keyword));
+
+        SearchResponse searchResponse = client.prepareSearch(index.getName())
+                .setQuery(queryBuilder)
+                .highlighter(new HighlightBuilder()
+                        .field("headers").preTags("__").postTags("__")
+                        .field("headerTypes").preTags("__").postTags("__")
+                        .field("contents.values").preTags("__").postTags("__")
+                        .field("contents.abstracts").preTags("__").postTags("__")
+                        .field("redirects").preTags("__").postTags("__")
+                        .field("abstract").preTags("__").postTags("__")
+                        .field("contents.values").preTags("__").postTags("__")
+                        .field("categories").preTags("__").postTags("__"))
+                .setSize(maxSize).setFrom(from).get(); // max of 100 hits will be returned for
+
+        return SearchResultUtil.toSearchResults(searchResponse);
+    }
+
     public List<SearchResult> keywordSearch(String keyword, ElasticIndex index, int maxSize) {
+        return keywordSearch(keyword, index, 0, maxSize);
+    }
+
+
+    public List<SearchResult> categorySearch(String category, String contains, ElasticIndex index, int from, int maxSize) {
+        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
+
+        queryBuilder.should(QueryBuilders.matchQuery("redirects", category));
+        queryBuilder.should(QueryBuilders.matchQuery("title", category));
+        queryBuilder.should(QueryBuilders.matchQuery("categories", category).boost(3));
+        queryBuilder.should(QueryBuilders.matchQuery("headers", contains));
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.values", contains), ScoreMode.Avg));
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.abstracts", contains), ScoreMode.Avg));
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.values", category), ScoreMode.Avg));
+        queryBuilder.should(QueryBuilders.nestedQuery("contents",
+                QueryBuilders.matchQuery("contents.relationships", contains), ScoreMode.Avg));
+        queryBuilder.should(QueryBuilders.matchQuery("abstract", contains));
+
+        SearchResponse searchResponse = client.prepareSearch(index.getName())
+                .setQuery(queryBuilder)
+                .highlighter(new HighlightBuilder()
+                        .field("redirects").preTags("__").postTags("__")
+                        .field("abstract").preTags("__").postTags("__")
+                        .field("headers").preTags("__").postTags("__")
+                        .field("contents.values").preTags("__").postTags("__")
+                        .field("categories").preTags("__").postTags("__"))
+                .setSize(maxSize).setFrom(from).get();
+        int i = 0;
+  /*      // Scroll until no hits are returned
+        for (SearchHit hit : searchResponse.getHits().getHits()) {
+            System.out.println("(" + ++i + ")");
+            // System.out.println("explanation:" + hit.getExplanation());
+            System.out.println("title: " + hit.getSource().get("title"));
+            System.out.println("url: " + hit.getSource().get("url"));
+            System.out.println("articleId: " + hit.getSource().get("articleId"));
+            System.out.println("table: " + hit.getSource().get("tableIdx"));
+            System.out.println("score: " + hit.getScore());
+            System.out.println(hit.getHighlightFields());
+            System.out.println("----------------------------");
+            // System.out.println(hit.getSourceAsString());
+
+        }*/
+        return SearchResultUtil.toSearchResults(searchResponse);
+    }
+
+    public List<SearchResult> categorySearch(String category, String contains, ElasticIndex index, int maxSize) {
+        return categorySearch(category, contains, index, 0, maxSize);
+    }
+
+    public List<SearchResult> relationSearch(String keyword, String relation ,ElasticIndex index, int from, int maxSize) {
         final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
 
         //queryBuilder.should(QueryBuilders.matchQuery("headerTypes", query));
@@ -255,7 +355,7 @@ public class ElasticSearchManager {
         queryBuilder.should(QueryBuilders.nestedQuery("contents",
                 QueryBuilders.matchQuery("contents.abstracts", keyword), ScoreMode.Avg));
         queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.relationships", keyword), ScoreMode.Avg));
+                QueryBuilders.matchQuery("contents.relationships", relation), ScoreMode.Avg)).boost(3);
         queryBuilder.should(QueryBuilders.matchQuery("abstract", keyword));
 
 
@@ -270,108 +370,17 @@ public class ElasticSearchManager {
                         .field("abstract").preTags("__").postTags("__")
                         .field("contents.values").preTags("__").postTags("__")
                         .field("categories").preTags("__").postTags("__"))
-                .setSize(maxSize).get(); // max of 100 hits will be returned for
-        // each scroll
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            // System.out.println("explanation:" + hit.getExplanation());
-            System.out.println("title: " + hit.getSource().get("title"));
-            System.out.println("url: " + hit.getSource().get("url"));
-            System.out.println("id: " + hit.getSource().get("articleId"));
-            System.out.println("table: " + hit.getSource().get("tableIdx"));
-            System.out.println("score: " + hit.getScore());
-            System.out.println(hit.getHighlightFields());
-            System.out.println("----------------------------");
-            // System.out.println(hit.getSourceAsString());
+                .setSize(maxSize).setFrom(from).get(); // max of 100 hits will be returned for
 
-        }
-
-        return buildSearchResults(searchResponse);
+        return SearchResultUtil.toSearchResults(searchResponse);
     }
 
-    public List<SearchResult> categorySearch(String category, String keyword, ElasticIndex index, int maxSize) {
-        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-
-        queryBuilder.should(QueryBuilders.matchQuery("redirects", category));
-        queryBuilder.should(QueryBuilders.matchQuery("title", category));
-        queryBuilder.should(QueryBuilders.matchQuery("categories", category).boost(3));
-        queryBuilder.should(QueryBuilders.matchQuery("headers", keyword));
-        queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.values", keyword), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.abstracts", keyword), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.values", category), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.matchQuery("abstract", keyword));
-
-
-        SearchResponse searchResponse = client.prepareSearch(index.getName())
-                .setQuery(queryBuilder)
-                .highlighter(new HighlightBuilder()
-                        .field("redirects").preTags("__").postTags("__")
-                        .field("abstract").preTags("__").postTags("__")
-                        .field("headers").preTags("__").postTags("__")
-                        .field("contents.values").preTags("__").postTags("__")
-                        .field("categories").preTags("__").postTags("__"))
-                .setSize(maxSize).get();
-
-        return buildSearchResults(searchResponse);
+    public List<SearchResult> relationSearch(String keyword, String relation ,ElasticIndex index, int maxSize) {
+        return relationSearch(keyword, relation, index, 0, maxSize);
     }
 
-    private List<SearchResult> buildSearchResults(SearchResponse searchResponse) {
-        List<SearchResult> searchResults = new ArrayList<>();
-        // Scroll until no hits are returned
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-            // System.out.println("explanation:" + hit.getExplanation());
-            final Map<String, Object> source = hit.getSource();
-
-            searchResults.add(
-                    new SearchResult(
-                            source.get("title").toString(),
-                            source.get("url").toString(),
-                            source.get("articleId").toString(),
-                            Integer.valueOf(source.get("tableIdx").toString()),
-                            hit.getScore(),
-                            hit.getHighlightFields())
-            );
-
-        }
-
-        return searchResults;
-    }
-
-    public void multiMatchSearch(String query) {
-        String allField = "_all";
-        MatchPhraseQueryBuilder mmqb = QueryBuilders.matchPhraseQuery(query, "title");
 
 
-        SearchResponse searchResponse = client.prepareSearch("wikipedia")
-                .setQuery(mmqb)
-                .highlighter(new HighlightBuilder()
-                        .field("abstract").preTags("__").postTags("__")
-                        .field("title").preTags("__").postTags("__")
-                        .field("categories").preTags("__").postTags("__")
-                        .field("redirects").preTags("__").postTags("__"))
-                .setSize(20).get();
-
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-
-            System.out.println("title: " + hit.getSource().get("title"));
-            System.out.println("url: " + hit.getSource().get("url"));
-            System.out.println("id: " + hit.getSource().get("article.id"));
-            System.out.println("table: " + hit.getSource().get("table.number"));
-            System.out.println("score: " + hit.getScore());
-            System.out.println(hit.getHighlightFields());
-            System.out.println("----------------------------");
-
-
-        }
-    }
-
-    // match a query
-
-    public void matchQuery() {
-
-    }
 
     /**
      * return documents that match any of the query keywords and
@@ -419,112 +428,7 @@ public class ElasticSearchManager {
 
     }
 
-    public void advancedQuery(ElasticIndex elasticIndex, String category, String contains) {
-        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
 
-        queryBuilder.should(QueryBuilders.matchQuery("redirects", category));
-        queryBuilder.should(QueryBuilders.matchQuery("title", category));
-        queryBuilder.should(QueryBuilders.matchQuery("categories", category).boost(3));
-        queryBuilder.should(QueryBuilders.matchQuery("headers", contains));
-        queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.values", contains), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.abstracts", contains), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                QueryBuilders.matchQuery("contents.values", category), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.matchQuery("abstract", contains));
-
-
-        SearchResponse searchResponse = client.prepareSearch(elasticIndex.getName()).setQuery(queryBuilder).setExplain(true)
-                .highlighter(new HighlightBuilder().field("headers").preTags("__").postTags("__")
-                        .field("contents.values").preTags("__").postTags("__")
-                        // .field("content.row.abstract").preTags("__").postTags("__")
-                        .field("categories").preTags("__").postTags("__").field("redirects").preTags("__")
-                        .postTags("__").field("abstract").preTags("__").postTags("__"))
-                .setSize(200).get(); // max of 100 hits will be returned for
-
-        // each scroll
-        SearchHit[] hitresponse = searchResponse.getHits().getHits();
-
-        if (hitresponse.length == 0) {
-            // queryBuilder.must(QueryBuilders.matchQuery("categories",
-            // category));
-            queryBuilder.should(QueryBuilders.matchQuery("headerTypes", category));
-            queryBuilder.should(QueryBuilders.matchQuery("headers", category));
-
-            queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                    QueryBuilders.matchQuery("contents.values", contains), ScoreMode.Avg));
-            queryBuilder.should(QueryBuilders.nestedQuery("contents",
-                    QueryBuilders.matchQuery("contents.abstract", contains), ScoreMode.Avg));
-
-            for (SearchHit hit : searchResponse.getHits().getHits()) {
-                // System.out.println("explanation:" + hit.getExplanation());
-                System.out.println("title: " + hit.getSource().get("title"));
-                System.out.println("url: " + hit.getSource().get("url"));
-                System.out.println("id: " + hit.getSource().get("articleId"));
-                System.out.println("table: " + hit.getSource().get("tableIdx"));
-                System.out.println("score: " + hit.getScore());
-                System.out.println(hit.getHighlightFields());
-                System.out.println("----------------------------");
-                // System.out.println(hit.getSourceAsString());
-            }
-        } else {
-            int i = 0;
-            // Scroll until no hits are returned
-            for (SearchHit hit : searchResponse.getHits().getHits()) {
-                System.out.println("(" + ++i + ")");
-                // System.out.println("explanation:" + hit.getExplanation());
-                System.out.println("title: " + hit.getSource().get("title"));
-                System.out.println("url: " + hit.getSource().get("url"));
-                System.out.println("articleId: " + hit.getSource().get("articleId"));
-                System.out.println("table: " + hit.getSource().get("tableIdx"));
-                System.out.println("score: " + hit.getScore());
-                System.out.println(hit.getHighlightFields());
-                System.out.println("----------------------------");
-                // System.out.println(hit.getSourceAsString());
-
-            }
-
-        }
-
-    }
-
-    public void advancedSearchPhraseQuery(String category, String contains) {
-
-        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-        //queryBuilder.must(QueryBuilders.matchQuery("categories", category));
-        queryBuilder.must(QueryBuilders.matchPhraseQuery("categories", category));
-
-        queryBuilder.must(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("content.row.value", contains), ScoreMode.Avg));
-        queryBuilder.should(QueryBuilders.matchPhraseQuery("redirects", category));
-        queryBuilder.should(QueryBuilders.matchPhraseQuery("title", contains));
-
-
-        SearchResponse searchResponse = client.prepareSearch("wikipedia")
-                .setQuery(queryBuilder)
-                .highlighter(new HighlightBuilder()
-                        .field("headers").preTags("__").postTags("__")
-                        .field("content.row.value").preTags("__").postTags("__")
-                        .field("categories").preTags("__").postTags("__"))
-//				 .setExplain(true)
-                .setSize(20).get(); // max of 100 hits will be returned for
-        // each scroll
-
-        // Scroll until no hits are returned
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-//			 System.out.println("explanation:" + hit.getExplanation());
-            System.out.println("title: " + hit.getSource().get("title"));
-            System.out.println("url: " + hit.getSource().get("url"));
-            System.out.println("id: " + hit.getSource().get("article.id"));
-            System.out.println("table: " + hit.getSource().get("table.number"));
-            System.out.println("score: " + hit.getScore());
-            System.out.println(hit.getHighlightFields());
-            System.out.println("----------------------------");
-            // System.out.println(hit.getSourceAsString());
-
-        }
-
-    }
 
     /**
      * multi-keywords should match the title and the content of the table
@@ -567,42 +471,7 @@ public class ElasticSearchManager {
     }
 
 
-    public void advancedSearchQuery3(String Categorie, String title, String contains) {
 
-        final BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
-        //queryBuilder.must(QueryBuilders.matchQuery("categories", category));
-        queryBuilder.should(QueryBuilders.matchQuery("title", title))
-                .boost(3);
-        queryBuilder.should(QueryBuilders.matchQuery("Categories", title));
-
-        queryBuilder.should(QueryBuilders.nestedQuery("content", QueryBuilders.matchPhraseQuery("content.row.value", contains), ScoreMode.Avg));
-
-        SearchResponse searchResponse = client.prepareSearch("wikipedia")
-                .setQuery(queryBuilder)
-                .highlighter(new HighlightBuilder()
-                        .field("content.row.value").preTags("__").postTags("__")
-                        .field("title").preTags("__").postTags("__")
-                        .field("categories").preTags("__").postTags("__"))
-//			 .setExplain(true)
-                .setSize(20).get(); // max of 100 hits will be returned for
-        // each scroll
-
-        // Scroll until no hits are returned
-        for (SearchHit hit : searchResponse.getHits().getHits()) {
-//		 System.out.println("explanation:" + hit.getExplanation());
-            System.out.println("title: " + hit.getSource().get("title"));
-            System.out.println("url: " + hit.getSource().get("url"));
-            System.out.println("id: " + hit.getSource().get("article.id"));
-            System.out.println("table: " + hit.getSource().get("table.number"));
-            System.out.println("score: " + hit.getScore());
-            System.out.println(hit.getHighlightFields());
-            System.out.println("----------------------------");
-            // System.out.println(hit.getSourceAsString());
-
-        }
-
-
-    }
 
 
 }

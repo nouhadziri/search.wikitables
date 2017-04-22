@@ -32,6 +32,10 @@ public class WikiPage {
 	private static Pattern disambCatPattern = Pattern.compile("\\(disambiguation\\)", Pattern.CASE_INSENSITIVE);
 	private static final Pattern upperCasePattern = Pattern.compile("[A-Z]");
 
+	private int numberOfColumns = 0;
+	private int numberOfExtractedHeaderTypes = 0;
+	private int numberOfExtractedRelationships = 0;
+
 	/**
 	 * Set the page title. This is not intended for direct use.
 	 *
@@ -282,6 +286,7 @@ public class WikiPage {
 				// rdf.cleanUpMatrix(matrix);
 
 				numberColumns = matrix[0].length;
+                this.numberOfColumns += numberColumns;
 				numberRows = matrix.length;
                 ArrayList<String> headers = rdf.getHeaders(matrix);
 				numtable++;
@@ -302,6 +307,7 @@ public class WikiPage {
 					ArrayList<String> rows = getMatrixRow(matrix, i);
 					ArrayList<String> rowAbstracts = getMatrixRowAbstract(matrix, i);
 					ArrayList<String> allPairRelationships = getAllPairRelationships(matrix, i);
+					this.numberOfExtractedRelationships += allPairRelationships.size();
 
 					final JSONObject row = new JSONObject();
 					row.put("idx", i);
@@ -318,7 +324,8 @@ public class WikiPage {
 				tableJSON.put("contents", rowJSON);
 
 				String[] headerTypes = wikiTextParser.predictLabelClass(matrix);
-				tableJSON.put("headerTypes", Arrays.stream(headerTypes).collect(Collectors.toList()));
+                this.numberOfExtractedHeaderTypes += Arrays.stream(headerTypes).filter(ht -> !ht.isEmpty()).count();
+                tableJSON.put("headerTypes", Arrays.stream(headerTypes).collect(Collectors.toList()));
 
 				String title = regexReplaceWhiteSpace(getTitle());
 				title = title.replaceAll("/!", "");
@@ -346,7 +353,19 @@ public class WikiPage {
 		return tables;
 	}
 
-	private ArrayList<String> getAllPairRelationships(Cell[][] matrix, int i) {
+    public int getNumberOfColumns() {
+        return numberOfColumns;
+    }
+
+    public int getNumberOfExtractedHeaderTypes() {
+        return numberOfExtractedHeaderTypes;
+    }
+
+    public int getNumberOfExtractedRelationships() {
+        return numberOfExtractedRelationships;
+    }
+
+    private ArrayList<String> getAllPairRelationships(Cell[][] matrix, int i) {
 		Map<Integer, Set<String>> wikiIdMap = new HashMap<>();
 		
 		for (int j = 0; j < matrix[i].length; j++) {

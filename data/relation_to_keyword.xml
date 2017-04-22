@@ -1,0 +1,26 @@
+<queries>
+    <query id="301" keyword="location of Paul Brown Stadium" >
+        <result table="1" page="American Football Conference" />
+    </query>
+    <query id="302" keyword=" The Wizard of Oz star ">
+        <result table="2" page="1987 in film" />
+    </query>
+    <query id="303" keyword="Houston Dash ground">
+        <result table="1" page="Greater Houston" />
+    </query>
+    <query id="304" keyword="Dodge City distributor">
+        <result table="3" page="List of American films of 1939" />
+    </query>
+    <query id="305" keyword="Eleanor of Aquitaine predecessor">
+        <result table="8" page="List of English consorts" />
+    </query>
+    <query id="306" keyword=" capital of Alabama">
+        <result table="1" page="List of historically black colleges and universities" />
+    </query>
+    <query id="307" keyword="location of Allen University">
+        <result table="1" page="List of historically black colleges and universities" />
+    </query>
+    <query id="308" keyword="music composer Born Free">
+        <result table="1" page="List of people who have won multiple Academy Awards in a single year" />
+    </query>
+</queries>

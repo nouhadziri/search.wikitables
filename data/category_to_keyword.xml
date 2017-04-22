@@ -1,41 +1,24 @@
 <queries>
 
-    <query id="202" category="Sportspeople" keyword="tennis">
-    <result table="2" page="Andre Agassi" />
-    <result table="3" page="Andre Agassi" />
-    <result table="4" page="Tennis at the 2012 Summer Olympics" />
-    <result table="2" page="Jacques Brugnon" />
-    <result table="8" page="Tennis at the 2012 Summer Olympics" />
-    <result table="1" page="Jacques Brugnon" />
-    <result table="3" page="Jacques Brugnon" />
-    <result table="5" page="Tennis at the 2012 Summer Olympics" />
-    <result table="6" page="Tennis at the 2012 Summer Olympics" />
-    <result table="7" page="Tennis at the 2012 Summer Olympics" />
-    <result table="2" page="Tennis players with most titles in the Open Era" />
-    <result table="1" page="Tennis at the 2012 Summer Olympics" />
-    <result table="2" page="Tennis at the 2012 Summer Olympics" />
+    <query id="201" keyword="Sportspeople in tennis">
+        <result table="2" page="Andre Agassi" />
+        <result table="3" page="Andre Agassi" />
+        <result table="4" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Jacques Brugnon" />
+        <result table="8" page="Tennis at the 2012 Summer Olympics" />
+        <result table="1" page="Jacques Brugnon" />
+        <result table="3" page="Jacques Brugnon" />
+        <result table="5" page="Tennis at the 2012 Summer Olympics" />
+        <result table="6" page="Tennis at the 2012 Summer Olympics" />
+        <result table="7" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Tennis players with most titles in the Open Era" />
+        <result table="1" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Tennis at the 2012 Summer Olympics" />
 
     </query>
 
-    <query id="201" category="american actor" keyword="list of movies starring Sean Connery">
-        <result table="3" page="List of American films of 1979" />
-        <result table="2" page="Jack Ryan (film series)" />
-        <result table="1" page="James Bond" />
-        <result table="7" page="James Bond" />
-        <result table="4" page="List of American films of 1972" />
-        <result table="2" page="List of American films of 1992" />
-        <result table="2" page="Jack Ryan (film series)" />
-        <result table="2" page="List of American films of 1966" />
-        <result table="2" page="James Bond" />
-        <result table="2" page="List of American films of 1979" />
-        <result table="3" page="List of American films of 1979" />
-        <result table="8" page="James Bond" />
-        <result table="4" page="1993 in film" />
-        <result table="4" page="Jack Ryan (film series)" />
-        <result table="5" page="Jack Ryan (film series)" />
-    </query>
 
-    <query id="203" category="musical movies" keyword="Tony Award ">
+    <query id="203" keyword="Tony Award musical movies ">
         <result table="2" page="1776 (musical)" />
         <result table="1" page="1776 (musical)" />
         <result table="2" page="Kiss Me, Kate" />
@@ -64,7 +47,7 @@
 
     </query>
 
-    <query id="204" category="Top level football leagues" keyword="teams">
+    <query id="204" keyword="teams in Top level football leagues">
         <result table="8" page="Serie A" />
         <result table="6" page="Serie A" />
         <result table="1" page="Serie A" />
@@ -94,7 +77,7 @@
 
     </query>
 
-    <query id="205" category="american movies" keyword="directed by Woody Allen">
+    <query id="205"  keyword=" american movies directed by Woody Allen">
         <result table="3" page="List of American films of 1979" />
         <result table="4" page="List of American films of 1966" />
         <result table="1" page="List of American films of 1992" />
@@ -107,13 +90,13 @@
 
     </query>
 
-    <query id="206" category="Golf tournaments" keyword="players">
+    <query id="206"  keyword="players in Golf tournaments">
         <result table="1" page="2011 Presidents Cup" />
         <result table="2" page="2011 Presidents Cup" />
     </query>
 
 
-    <query id="207" category="United states" keyword="professional sports teams">
+    <query id="207" keyword="professional sports teams in United states">
         <result table="2" page="List of Major League Soccer stadiums" />
         <result table="8" page="Alabama" />
         <result table="4" page="List of Major League Soccer stadiums" />
@@ -159,7 +142,7 @@
 
     </query>
 
-    <query id="208" category="Broadway musicals" keyword=" Award">
+    <query id="208" keyword=" Award in Broadway musicals">
 
         <result table="2" page="1776 (musical)" />
         <result table="1" page="1776 (musical)" />

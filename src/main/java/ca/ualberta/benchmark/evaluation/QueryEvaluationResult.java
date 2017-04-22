@@ -35,7 +35,7 @@ public class QueryEvaluationResult {
         int relevants = 0;
         int relevantsInTopR = 0;
         this.interpolatedPrecision = new double[POINTS_11];
-        Arrays.fill(this.interpolatedPrecision, 0);
+        Arrays.fill(this.interpolatedPrecision, -1);
 
 
         DoubleSummaryStatistics avgPrecisionSummary = new DoubleSummaryStatistics();
@@ -50,7 +50,7 @@ public class QueryEvaluationResult {
 
                 for (int j = 0; j < this.interpolatedPrecision.length; j++) {
                     if (recall >= 0.1 * j) {
-                        if (this.interpolatedPrecision[j] == 0)
+                        if (this.interpolatedPrecision[j] < 0)
                             this.interpolatedPrecision[j] = precisionAtI;
                     } else
                         break;
@@ -61,6 +61,11 @@ public class QueryEvaluationResult {
             }
 
             i++;
+        }
+
+        for (int j = 0; j < this.interpolatedPrecision.length; j++) {
+            if (this.interpolatedPrecision[j] < 0)
+                this.interpolatedPrecision[j] = 0;
         }
 
         this.averagePrecision = avgPrecisionSummary.getAverage();

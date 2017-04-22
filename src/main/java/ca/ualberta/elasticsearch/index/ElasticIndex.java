@@ -13,7 +13,10 @@ public interface ElasticIndex {
 
     public static ElasticIndex[] indices() {
         return new ElasticIndex[] {
-                analyzed, notAnalyzed, notLowercased, notStemmed, stopwordsIncluded, luceneScoring, lmDirichlet, lmJelinek
+                analyzed,
+                notAnalyzed, notLowercased, notStemmed, stopwordsIncluded,
+                luceneScoring, lmDirichlet, lmJelinek,
+                luceneNotLowercased, luceneNotStemmed, luceneStopwordsIncluded
         };
     }
 
@@ -27,4 +30,7 @@ public interface ElasticIndex {
     LuceneScoringElasticIndex luceneScoring = new LuceneScoringElasticIndex();
     LMDirichletElasticIndex lmDirichlet = new LMDirichletElasticIndex();
     LMJelinekElasticIndex lmJelinek = new LMJelinekElasticIndex();
+    LuceneScoringNotLowercasedElasticIndex luceneNotLowercased = new LuceneScoringNotLowercasedElasticIndex();
+    LuceneScoringNotStemmedElasticIndex luceneNotStemmed = new LuceneScoringNotStemmedElasticIndex();
+    LuceneScoringStopwordsIncludedElasticIndex luceneStopwordsIncluded = new LuceneScoringStopwordsIncludedElasticIndex();
 }

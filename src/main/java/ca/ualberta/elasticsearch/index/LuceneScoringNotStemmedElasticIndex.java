@@ -1,34 +1,37 @@
 package ca.ualberta.elasticsearch.index;
 
 /**
- * Created by nouhadziri on 2017-04-14.
+ * Created by nouhadziri on 2017-04-20.
  */
-public class NotLowercasedElasticIndex implements ElasticIndex {
+public class LuceneScoringNotStemmedElasticIndex implements ElasticIndex {
     @Override
     public String getName() {
-        return "notlowered";
+        return "lucenenotstemmed";
     }
 
     @Override
     public String getSettings() {
         return "{\n" +
+                "    \"index\": {\n" +
+                "      \"similarity\": {\n" +
+                "        \"default\": {\n" +
+                "          \"type\": \"classic\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
                 "   \"analysis\": {\n" +
                 "      \"analyzer\": {\n" +
-                "           \"not_lowered_analyzer\": {\n" +
+                "           \"not_stemmed_analyzer2\": {\n" +
                 "               \"tokenizer\": \"standard\",\n" +
-                "               \"filter\" : [\"my_stop\", \"my_stemmer\"]" +
+                "               \"filter\" : [ \"lowercase\", \"my_stop2\"]\n" +
                 "           }\n" +
-                "       },\n" +
-                "       \"filter\" : {\n" +
-                "           \"my_stemmer\" : {\n" +
-                "               \"type\" : \"stemmer\",\n" +
-                "               \"name\" : \"english\"\n" +
-                "           },\n" +
-                "           \"my_stop\" : {\n" +
+                "      },\n" +
+                "      \"filter\" : {\n" +
+                "           \"my_stop2\" : {\n" +
                 "               \"type\" : \"stop\",\n" +
                 "               \"stopwords\" : \"_english_\"\n" +
                 "           }\n" +
-                "       }" +
+                "      }\n" +
                 "   }\n" +
                 "}";
     }
@@ -41,7 +44,7 @@ public class NotLowercasedElasticIndex implements ElasticIndex {
                 "			\"title\": {\n" +
                 "				\"type\": \"string\",\n" +
                 "				\"index\": \"analyzed\",\n" +
-                "				\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "				\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "			},\n" +
                 "			\"articleId\": {\n" +
                 "				\"type\": \"integer\",\n" +
@@ -58,27 +61,27 @@ public class NotLowercasedElasticIndex implements ElasticIndex {
                 "			\"abstract\": {\n" +
                 "				\"type\": \"string\",\n" +
                 "				\"index\": \"analyzed\",\n" +
-                "				\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "				\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "			},\n" +
                 "			\"redirects\": {\n" +
                 "				\"type\": \"string\",\n" +
                 "				\"index\": \"analyzed\",\n" +
-                "				\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "				\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "			},\n" +
                 "			\"categories\": {\n" +
                 "				\"type\": \"string\",\n" +
                 "				\"index\": \"analyzed\",\n" +
-                "				\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "				\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "			},\n" +
                 "			\"headers\": {\n" +
                 "				\"type\": \"string\",\n" +
                 "				\"index\": \"analyzed\",\n" +
-                "				\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "				\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "			},\n" +
                 "			\"headerTypes\": {\n" +
                 "				\"type\": \"string\",\n" +
                 "				\"index\": \"analyzed\",\n" +
-                "				\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "				\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "			},\n" +
                 "			\"contents\": {\n" +
                 "				\"type\": \"nested\",\n" +
@@ -87,17 +90,17 @@ public class NotLowercasedElasticIndex implements ElasticIndex {
                 "					\"values\": {\n" +
                 "						\"type\": \"string\",\n" +
                 "	        			\"index\": \"analyzed\",\n" +
-                "		        		\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "		        		\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "					},\n" +
                 "					\"abstracts\": {\n" +
                 "						\"type\": \"string\",\n" +
                 "		        		\"index\": \"analyzed\",\n" +
-                "			        	\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "			        	\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "					},\n" +
                 "					\"relationships\": {\n" +
                 "						\"type\": \"string\",\n" +
                 "		        		\"index\": \"analyzed\",\n" +
-                "			        	\"analyzer\": \"not_lowered_analyzer\"\n" +
+                "			        	\"analyzer\": \"not_stemmed_analyzer2\"\n" +
                 "					}\n" +
                 "				}\n" +
                 "			}\n" +
@@ -105,4 +108,5 @@ public class NotLowercasedElasticIndex implements ElasticIndex {
                 "	}\n" +
                 "}";
     }
+
 }

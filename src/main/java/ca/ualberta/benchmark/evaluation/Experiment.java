@@ -24,7 +24,7 @@ public class Experiment {
     }
 
     private static QueryEvaluationResult runCategoryQuery(CategoryQuery query, ElasticIndex index) {
-        final List<SearchResult> searchResults = elasticSearchManager.categorySearch(query.getKeyword(), query.getCategory(), index, RESULTS_SIZE);
+        final List<SearchResult> searchResults = elasticSearchManager.categorySearch(query.getCategory(),query.getKeyword(), index, RESULTS_SIZE);
         return new QueryEvaluationResult(query, searchResults);
     }
 
@@ -44,6 +44,22 @@ public class Experiment {
         System.out.println(evaluator.getSummary());
     }
 
+    static void runCategorySearchOnAllIndices() {
+        final List<CategoryQuery> queries = new QueryContainer("data/category_queries.xml").getCategoryQueries();
+
+        for (ElasticIndex elasticIndex : ElasticIndex.indices()) {
+            final IREvaluator evaluator = new IREvaluator();
+
+            for (CategoryQuery query : queries) {
+                evaluator.add(runCategoryQuery(query, elasticIndex));
+            }
+
+            System.out.println("categorySeach on " + elasticIndex.getName());
+            System.out.println(evaluator.getSummary());
+            System.out.println("--------------------");
+        }
+    }
+
     static void runKeywordSearchOnAllIndices() {
         final List<KeywordQuery> queries = new QueryContainer("data/keyword_queries.xml").getKeywordQueries();
 
@@ -60,8 +76,27 @@ public class Experiment {
         }
     }
 
+    static void runRelationSearchOnAllIndices() {
+        final List<RelationQuery> queries = new QueryContainer("data/relation_queries.xml").getRelationQueries();
+
+        for (ElasticIndex elasticIndex : ElasticIndex.indices()) {
+            final IREvaluator evaluator = new IREvaluator();
+
+            for (RelationQuery query : queries) {
+                evaluator.add(runRelationQuery(query, elasticIndex));
+            }
+
+            System.out.println("Relation search on " + elasticIndex.getName());
+            System.out.println(evaluator.getSummary());
+            System.out.println("--------------------");
+        }
+    }
+
     public static void main(String[] args) {
-        runKeywordSearchOnAllIndices();
-//        runCategorySearchOnAnalyzedIndex();
+         runKeywordSearchOnAllIndices();
+      //  runCategorySearchOnAnalyzedIndex();
+//        runCategorySearchOnAllIndices();
+
+//        runRelationSearchOnAllIndices();
     }
 }

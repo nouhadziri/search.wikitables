@@ -12,11 +12,24 @@ public class NotStemmedElasticIndex implements ElasticIndex {
     @Override
     public String getSettings(){
         return "{\n" +
+                "    \"index\": {\n" +
+                "      \"similarity\": {\n" +
+                "        \"default\": {\n" +
+                "          \"type\": \"classic\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    },\n" +
                 "   \"analysis\": {\n" +
                 "      \"analyzer\": {\n" +
                 "           \"not_stemmed_analyzer\": {\n" +
-                "               \"type\": \"standard\",\n" +
-                "               \"stopwords\": \"_english_\"\n" +
+                "               \"tokenizer\": \"standard\",\n" +
+                "               \"filter\" : [ \"lowercase\", \"my_stop\"]\n" +
+                "           }\n" +
+                "      },\n" +
+                "      \"filter\" : {\n" +
+                "           \"my_stop\" : {\n" +
+                "               \"type\" : \"stop\",\n" +
+                "               \"stopwords\" : \"_english_\"\n" +
                 "           }\n" +
                 "      }\n" +
                 "   }\n" +

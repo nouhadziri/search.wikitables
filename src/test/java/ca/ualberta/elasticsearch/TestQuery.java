@@ -4,7 +4,6 @@ import ca.ualberta.elasticsearch.index.AnalyzedElasticIndex;
 import ca.ualberta.elasticsearch.index.ElasticIndex;
 import org.junit.After;
 import org.junit.Test;
-import ca.ualberta.elasticsearch.index.ElasticIndex;
 
 
 
@@ -23,16 +22,32 @@ public class TestQuery {
 	public void testKeywordQuery(){
 		//manager.getResponse("american football "); //match multiple keywords
 //		manager.getResponse("list of Bond 007 movies");
-//		manager.getResponse("Disney movies");
+//	manager.getResponse("Disney movies");
 		//manager.keywordQuery("Paul Brown Stadium location");
-		//manager.keywordQuery("Francesco");
+		//manager.keywordQuery("0Francesco");
         System.out.println("******* keyword query *******");
 		//manager.keywordQuery("sportspeople in tennis");
-		manager.keywordSearch("list of movies starring Sean Connery",ElasticIndex.analyzed,10 );
+		//manager.keywordSearch("list of movies starring Sean Connery",ElasticIndex.analyzed,100 );
+//		manager.keywordSearch("movies starring Sean Connery",ElasticIndex.notStemmed,100 );
+//        manager.keywordSearch("musical movies tony award",ElasticIndex.analyzed,100 );
+//        manager.keywordSearch("movies directed by Woody Allen",ElasticIndex.analyzed,100 );
+//        manager.keywordSearch("United states professional sports teams",ElasticIndex.analyzed,100 );
+//        manager.keywordSearch("computer games developed by Ubisoft",ElasticIndex.analyzed,100 );
+//        manager.keywordSearch("computer games developed by Ubisoft",ElasticIndex.notStemmed,100 );
+//        manager.keywordSearch("movies academy award nominations",ElasticIndex.notStemmed,100 );
+        System.out.println(SearchResultUtil.toSummary(manager.keywordSearch("movies directed by Woody Allen",ElasticIndex.notLowercased,20 )));
+   //manager.keywordSearch("grammy best album in 2012",ElasticIndex.notAnalyzed,100 );
+      //(better than analyzed)  manager.keywordSearch("grammy best album in 2012",ElasticIndex.notStemmed,100 );
         System.out.println("*****************************");
 
 		//manager.keywordQuery("Disney movies");
 	}
+
+  //  @Test
+    public void testRelationSearch(){
+
+	    manager.relationSearch("Paul Brown Stadium", "location", ElasticIndex.analyzed,30);
+    }
 
 
 	/**
@@ -40,9 +55,17 @@ public class TestQuery {
 	 */
 	//@Test
 	public void testAdvancedQuery() {
-		manager.advancedQuery(ElasticIndex.analyzed, "metropolitan areas", "sports clubs");
-	//	manager.advancedQuery("american actor", "list of movies starring Sean Connery");
-		//manager.advancedQuery("musical movies", "tony award"); 
+		//manager.advancedQuery(ElasticIndex.analyzed, "metropolitan areas", "sports clubs");
+		//manager.advancedQuery(ElasticIndex.analyzed, "", "Award");
+
+	//manager.advancedQuery(ElasticIndex.analyzed,"american actor", "list of movies starring Sean Connery");
+//	manager.categorySearch("Sportspeople", "tennis",ElasticIndex.analyzed,30);
+	//manager.advancedQuery(ElasticIndex.analyzed,"Broadway musicals", "Grammy Award");
+	//manager.advancedQuery(ElasticIndex.analyzed,"musical movies", "Tony Award");
+	//manager.advancedQuery(ElasticIndex.analyzed,"Top level football leagues", "teams");
+	//manager.advancedQuery(ElasticIndex.analyzed,"american movies", "directed by Woody Allen");
+	//manager.advancedQuery(ElasticIndex.analyzed,"United states", "professional sports teams");
+		//manager.advancedQuery("musical movies", "tony award");
 		//manager.advancedQuery("grammy", "best album in 2012"); 
 		//manager.advancedQuery("american movies", "directed by Woody Allen"); 
 		//Canceled manager.advancedQuery("tennis", "international players"); 

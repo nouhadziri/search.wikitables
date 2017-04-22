@@ -1,21 +1,28 @@
 package ca.ualberta.cs.extractor;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
-import java.util.HashSet;
-import java.util.List;
-
 import ca.ualberta.elasticsearch.ElasticSearchManager;
 import edu.jhu.nlp.wikipedia.PageCallbackHandler;
 import edu.jhu.nlp.wikipedia.WikiPage;
 import edu.jhu.nlp.wikipedia.WikiXMLSAXParser;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.HashSet;
+import java.util.IntSummaryStatistics;
+import java.util.List;
+
 public class Wikiparser implements PageCallbackHandler {
 
     private Writer fileWriter;
     private final ElasticSearchManager manager = new ElasticSearchManager();
+
+    private final IntSummaryStatistics numberOfColumns = new IntSummaryStatistics();
+    private final IntSummaryStatistics numberOfTables = new IntSummaryStatistics();
+    private final IntSummaryStatistics numberOfExtractedHeaderTypes = new IntSummaryStatistics();
+    private final IntSummaryStatistics numberOfExtractedRelationships = new IntSummaryStatistics();
+
 
     public Wikiparser(boolean isCreateSchema) throws IOException {
         File file = new File("/Users/nouhadziri/Documents/winter2017/cmput605/wikiTables/toJsonNew2.json");
@@ -81,6 +88,10 @@ public class Wikiparser implements PageCallbackHandler {
             final List<String> jsonArticle = page.createJsonFromArticle(fileWriter);
             manager.saveTables(jsonArticle);
             manager.saveDocumentsOnAllIndices(jsonArticle);
+            numberOfTables.accept(page.numtable);
+            numberOfColumns.accept(page.getNumberOfColumns());
+            numberOfExtractedHeaderTypes.accept(page.getNumberOfExtractedHeaderTypes());
+            numberOfExtractedRelationships.accept(page.getNumberOfExtractedRelationships());
 //			page.createJsonFromArticle(fileWriter);
 
             //System.out.println("wikilink: "+page.CheckWikid("[[Siobhán|  McCarthy]]"));
@@ -100,6 +111,13 @@ public class Wikiparser implements PageCallbackHandler {
             e.printStackTrace();
         }
 
+        System.out.println("-------------------------");
+        System.out.printf("number of tables - total: %d  avg per page: %.3f\n", numberOfTables.getSum(), numberOfTables.getAverage());
+        System.out.printf("number of columns - total: %d  avg per page: %.3f\n", numberOfColumns.getSum(), numberOfColumns.getAverage());
+        System.out.printf("number of header types - total: %d  avg per page: %.3f\n", numberOfExtractedHeaderTypes.getSum(), numberOfExtractedHeaderTypes.getAverage());
+        System.out.printf("number of relationships - total: %d  avg per page: %.3f\n", numberOfExtractedRelationships.getSum(), numberOfExtractedRelationships.getAverage());
+        System.out.println();
+
         System.out.println("DONE!!!!!!!1");
 
     }
@@ -107,7 +125,7 @@ public class Wikiparser implements PageCallbackHandler {
     public static void main(String[] args) {
         try {
             Wikiparser indexer = new Wikiparser(false);
-           // indexer.indexWikipedia("data/pages.xml");
+//            indexer.indexWikipedia("data/pages.xml");
 			indexer.indexWikipedia("data/additional_pages.xml");
         } catch (Exception e) {
             e.printStackTrace();

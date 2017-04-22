@@ -1,30 +1,32 @@
 <queries>
-    <query id="101" keyword="list of movies starring Sean Connery">
-        <result table="3" page="List of American films of 1979" />
-        <result table="1" page="James Bond" />
-        <result table="2" page="James Bond" />
-        <result table="2" page="List of American films of 1992" />
-        <result table="2" page="Jack Ryan (film series)" />
-        <result table="2" page="List of American films of 1966" />
-        <result table="4" page="List of American films of 1972" />
-        <result table="2" page="List of American films of 1979" />
-    </query>
+
     <query id="102" keyword="musical movies tony award">
-        <result table="1" page="1776 (musical)" />
         <result table="2" page="1776 (musical)" />
-        <result table="1" page="Kiss Me, Kate" />
+        <result table="1" page="1776 (musical)" />
         <result table="2" page="Kiss Me, Kate" />
+
+        <result table="9" page="Guys and Dolls" />
+        <result table="5" page="Guys and Dolls" />
+        <result table="1" page="Kiss Me, Kate" />
+        <result table="3" page="Guys and Dolls" />
+        <result table="2" page="Blood Brothers (musical)" />
+        <result table="1" page="Big River (musical)" />
+
         <result table="1" page="Guys and Dolls" />
         <result table="2" page="Guys and Dolls" />
-        <result table="3" page="Guys and Dolls" />
-        <result table="5" page="Guys and Dolls" />
-        <result table="9" page="Guys and Dolls" />
-        <result table="4" page="Mamma Mia!" />
-        <result table="1" page="Big River (musical)" />
-        <result table="2" page="Blood Brothers (musical)" />
-        <result table="1" page="I Love My Wife" />
         <result table="1" page="Curtains (musical)" />
+
+        <result table="1" page="Curtains (musical)" />
+        <result table="1" page="It Ain't Nothin' But the Blues" />
+        <result table="2" page="Big River (musical)" />
+        <result table="4" page="Mamma Mia!" />
+        <result table="3" page="Kiss Me, Kate" />
+        <result table="4" page="Kiss Me, Kate" />
+        <result table="7" page="Guys and Dolls" />
+
+        <result table="1" page="I Love My Wife" />
     </query>
+
     <query id="103" keyword="grammy best album in 2012">
         <result table="1" page="Grammy Award for Best Pop Vocal Album" />
         <result table="1" page="Grammy Award for Best Rock Album" />
@@ -34,11 +36,211 @@
         <result table="1" page="List of American films of 1992" />
         <result table="4" page="List of American films of 1966" />
         <result table="1" page="AFI's 100 Years...100 Movies (10th Anniversary Edition)" />
+        <result table="2" page="Goya Award for Best European Film" />
         <result table="2" page="List of American films of 1972" />
+        <result table="4" page="List of American films of 1972" />
         <result table="1" page="List of people who have won multiple Academy Awards in a single year" />
         <result table="1" page="List of oldest and youngest Academy Award winners and nominees" />
     </query>
-    <query id="105" keyword="United states professional sports teams">
+
+    <query id="106" keyword="computer games developed by Ubisoft">
+        <result table="51" page="List of Game of the Year awards" />
+        <result table="43" page="List of Game of the Year awards" />
+        <result table="4" page="List of games using Scaleform" />
+        <result table="5" page="List of games using Scaleform" />
+        <result table="6" page="List of games using Scaleform" />
+
+    </query>
+
+
+    <query id="108" keyword="movies starring Dustin Hoffman">
+        <result table="1" page="List of American films of 1979" />
+        <result table="3" page="List of American films of 1979" />
+        <result table="1" page="List of American films of 1992" />
+
+    </query>
+
+    <query id="109" keyword="concert tours england">
+        <result table="1" page="Bob Dylan England Tour 1965" />
+        <result table="1" page="Black Holes and Revelations Tour" />
+        <result table="3" page="Black Holes and Revelations Tour" />
+    </query>
+
+    <query id="110" keyword="movies nominee best costume design">
+        <result table="6" page="1993 in film" />
+        <result table="1" page="Kiss Me, Kate" />
+        <result table="2" page="Kiss Me, Kate" />
+        <result table="5" page="Guys and Dolls" />
+    </query>
+
+
+    <query id="201" keyword="Sportspeople in tennis">
+        <result table="2" page="Andre Agassi" />
+        <result table="3" page="Andre Agassi" />
+        <result table="4" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Jacques Brugnon" />
+        <result table="8" page="Tennis at the 2012 Summer Olympics" />
+        <result table="1" page="Jacques Brugnon" />
+        <result table="3" page="Jacques Brugnon" />
+        <result table="5" page="Tennis at the 2012 Summer Olympics" />
+        <result table="6" page="Tennis at the 2012 Summer Olympics" />
+        <result table="7" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Tennis players with most titles in the Open Era" />
+        <result table="1" page="Tennis at the 2012 Summer Olympics" />
+        <result table="2" page="Tennis at the 2012 Summer Olympics" />
+
+    </query>
+
+    <query id="204" keyword="teams in Top level football leagues">
+        <result table="8" page="Serie A" />
+        <result table="6" page="Serie A" />
+        <result table="1" page="Serie A" />
+        <result table="7" page="Serie A" />
+        <result table="2" page="Serie A" />
+        <result table="3" page="Serie A" />
+
+        <result table="5" page="Serie A" />
+        <result table="4" page="Serie A" />
+        <result table="1" page="American Football Conference" />
+        <result table="2" page="American Football Conference" />
+        <result table="1" page="National Football League" />
+        <result table="4" page="List of Major League Soccer stadiums" />
+        <result table="9" page="List of Major League Soccer stadiums" />
+        <result table="2" page="List of Major League Soccer stadiums" />
+        <result table="6" page="List of Major League Soccer stadiums" />
+
+        <result table="1" page="List of Major League Soccer stadiums" />
+        <result table="3" page="2011 AFC Annual Awards" />
+        <result table="5" page="List of Major League Soccer stadiums" />
+        <result table="4" page="2011 AFC Annual Awards" />
+        <result table="5" page="2011 AFC Annual Awards" />
+        <result table="1" page="2011 AFC Annual Awards" />
+        <result table="1" page="2011 MLS SuperDraft" />
+        <result table="2" page="2011 MLS SuperDraft" />
+
+
+    </query>
+
+
+    <query id="206"  keyword="players in Golf tournaments">
+        <result table="1" page="2011 Presidents Cup" />
+        <result table="2" page="2011 Presidents Cup" />
+    </query>
+
+    <query id="208" keyword=" Award in Broadway musicals">
+
+        <result table="2" page="1776 (musical)" />
+        <result table="1" page="1776 (musical)" />
+        <result table="1" page="It Ain't Nothin' But the Blues" />
+        <result table="2" page="I Love My Wife" />
+        <result table="1" page="I Love My Wife" />
+        <result table="1" page="Big River (musical)" />
+        <result table="2" page="Kiss Me, Kate" />
+
+        <result table="1" page="List of Grammy Award ceremony locations" />
+        <result table="3" page="Mamma Mia!" />
+        <result table="5" page="Mamma Mia!" />
+        <result table="4" page="Mamma Mia!" />
+        <result table="2" page="Blood Brothers (musical)" />
+        <result table="1" page="Blood Brothers (musical)" />
+        <result table="5" page="Guys and Dolls" />
+        <result table="3" page="Guys and Dolls" />
+        <result table="5" page="John Williams" />
+        <result table="1" page="Curtains (musical)" />
+        <result table="1" page="17th Annual Latin Grammy Awards" />
+        <result table="1" page="Grammy Award for Best Rock Album" />
+        <result table="1" page="Grammy Award for Best Pop Vocal Album" />
+        <result table="2" page="List of Grammy Award ceremony locations" />
+
+    </query>
+
+    <query id="101" keyword="list of movies starring Sean Connery">
+        <result table="1" page="James Bond" />
+        <result table="7" page="James Bond" />
+        <result table="2" page="James Bond" />
+        <result table="2" page="Jack Ryan (film series)" />
+        <result table="8" page="James Bond" />
+        <result table="4" page="1993 in film" />
+        <result table="4" page="List of American films of 1972" />
+        <result table="3" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1992" />
+        <result table="2" page="List of American films of 1966" />
+        <result table="2" page="List of American films of 1979" />
+        <result table="4" page="Jack Ryan (film series)" />
+        <result table="5" page="Jack Ryan (film series)" />
+        <result table="3" page="List of American films of 1979" />
+    </query>
+
+    <query id="107" keyword="movies academy award nominations">
+        <result table="2" page="1993 in film" />
+        <result table="1" page="David Lynch" />
+        <result table="5" page="David Lynch" />
+        <result table="1" page="John Williams" />
+
+        <result table="1" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="2" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="3" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="4" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="5" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="6" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="7" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="8" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="9" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="10" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="11" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="12" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="13" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="14" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="15" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="16" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="17" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="18" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="19" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="20" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="21" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="22" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="23" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="24" page="List of oldest and youngest Academy Award winners and nominees" />
+
+        <result table="1" page="List of American films of 1979" />
+        <result table="2" page="List of American films of 1979" />
+        <result table="3" page="List of American films of 1979" />
+        <result table="4" page="List of American films of 1979" />
+        <result table="1" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="24" page="List of oldest and youngest Academy Award winners and nominees" />
+        <result table="1" page="List of American films of 1992" />
+        <result table="2" page="List of American films of 1992" />
+        <result table="6" page="List of American films of 1992" />
+        <result table="7" page="List of American films of 1992" />
+        <result table="8" page="List of American films of 1992" />
+        <result table="9" page="List of American films of 1992" />
+        <result table="2" page="Academy Award for Best Production Design" />
+        <result table="3" page="Academy Award for Best Production Design" />
+        <result table="4" page="Academy Award for Best Production Design" />
+        <result table="5" page="Academy Award for Best Production Design" />
+        <result table="6" page="Academy Award for Best Production Design" />
+        <result table="7" page="Academy Award for Best Production Design" />
+        <result table="8" page="Academy Award for Best Production Design" />
+        <result table="9" page="Academy Award for Best Production Design" />
+        <result table="10" page="Academy Award for Best Production Design" />
+        <result table="11" page="Academy Award for Best Production Design" />
+        <result table="12" page="Academy Award for Best Production Design" />
+        <result table="1" page="List of people who have won multiple Academy Awards in a single year" />
+        <result table="3" page="List of American films of 1939" />
+        <result table="4" page="List of American films of 1939" />
+        <result table="8" page="List of American films of 1939" />
+        <result table="10" page="List of American films of 1939" />
+        <result table="11" page="List of American films of 1939" />
+        <result table="2" page="List of American films of 1966" />
+        <result table="3" page="List of American films of 1966" />
+        <result table="4" page="List of American films of 1966" />
+        <result table="2" page="List of American films of 1972" />
+        <result table="3" page="List of American films of 1972" />
+        <result table="4" page="List of American films of 1972" />
+        <result table="1" page="James Cameron" />
+        <result table="1" page="1993 in film:" />
+    </query>
+    <query id="105" keyword="professional sports teams United states">
         <result table="1" page="National Football League" />
         <result table="8" page="Alabama" />
         <result table="1" page="List of Major League Soccer stadiums" />
@@ -78,77 +280,13 @@
         <result table="9" page="2008 Major League Baseball All-Star Game" />
         <result table="10" page="2008 Major League Baseball All-Star Game" />
         <result table="1" page="Greater Houston" />
+        <result table="4" page="Greater Houston" />
+        <result table="3" page="List of National Basketball Association arenas" />
 
-    </query>
-    <query id="106" keyword="computer games developed by Ubisoft">
-        <result table="51" page="List of Game of the Year awards" />
-        <result table="43" page="List of Game of the Year awards" />
-        <result table="4" page="List of games using Scaleform" />
-        <result table="5" page="List of games using Scaleform" />
-        <result table="6" page="List of games using Scaleform" />
-
-    </query>
-    <query id="107" keyword="movies academy award nominations">
-        <result table="2" page="1993 in film" />
-        <result table="1" page="David Lynch" />
-        <result table="5" page="David Lynch" />
-        <result table="1" page="John Williams" />
-        <result table="1" page="List of American films of 1979:" />
-        <result table="2" page="List of American films of 1979:" />
-        <result table="3" page="List of American films of 1979:" />
-        <result table="4" page="List of American films of 1979:" />
-        <result table="1" page="List of oldest and youngest Academy Award winners and nominees" />
-        <result table="24" page="List of oldest and youngest Academy Award winners and nominees" />
-        <result table="1" page="List of American films of 1992" />
-        <result table="2" page="List of American films of 1992" />
-        <result table="6" page="List of American films of 1992" />
-        <result table="7" page="List of American films of 1992" />
-        <result table="8" page="List of American films of 1992" />
-        <result table="9" page="List of American films of 1992" />
-        <result table="2" page="Academy Award for Best Production Design" />
-        <result table="3" page="Academy Award for Best Production Design" />
-        <result table="4" page="Academy Award for Best Production Design" />
-        <result table="5" page="Academy Award for Best Production Design" />
-        <result table="6" page="Academy Award for Best Production Design" />
-        <result table="7" page="Academy Award for Best Production Design" />
-        <result table="8" page="Academy Award for Best Production Design" />
-        <result table="9" page="Academy Award for Best Production Design" />
-        <result table="10" page="Academy Award for Best Production Design" />
-        <result table="11" page="Academy Award for Best Production Design" />
-        <result table="12" page="Academy Award for Best Production Design" />
-        <result table="1" page="List of people who have won multiple Academy Awards in a single year" />
-        <result table="3" page="List of American films of 1939" />
-        <result table="4" page="List of American films of 1939" />
-        <result table="8" page="List of American films of 1939" />
-        <result table="10" page="List of American films of 1939" />
-        <result table="11" page="List of American films of 1939" />
-        <result table="2" page="List of American films of 1966" />
-        <result table="3" page="List of American films of 1966" />
-        <result table="4" page="List of American films of 1966" />
-        <result table="2" page="List of American films of 1972" />
-        <result table="3" page="List of American films of 1972" />
-        <result table="4" page="List of American films of 1972" />
-        <result table="1" page="James Cameron" />
-        <result table="1" page="1993 in film:" />
-    </query>
-    <query id="108" keyword="movies starring Dustin Hoffman">
-        <result table="1" page="List of American films of 1979" />
-        <result table="3" page="List of American films of 1979" />
-        <result table="1" page="List of American films of 1992" />
 
     </query>
 
-    <query id="109" keyword="concert tours england">
-        <result table="1" page="Bob Dylan England Tour 1965" />
-        <result table="1" page="Black Holes and Revelations Tour" />
-        <result table="3" page="Black Holes and Revelations Tour" />
-    </query>
 
-    <query id="110" keyword="movies nominee best costume design">
-        <result table="6" page="1993 in film" />
-        <result table="1" page="Kiss Me, Kate" />
-        <result table="2" page="Kiss Me, Kate" />
-        <result table="5" page="Guys and Dolls" />
-    </query>
+
 
 </queries>
